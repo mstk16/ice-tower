@@ -187,7 +187,8 @@ function rainbowFrame(now){const x=_rbc.getContext('2d');x.clearRect(0,0,16,16);
 const _shc=document.createElement('canvas');_shc.width=16;_shc.height=16;
 function skinFx(id){const s=SKINS.find(k=>k.id===id);return s?(s.fx||(s.rainbow?'rainbow':null)):null}
 function skinShine(id){const f=skinFx(id);return !!f&&f!=='rainbow'&&f!=='robot'&&f!=='ghost'}
-function skinAnimated(id){return !!skinFx(id)}
+function skinTier(id){const s=SKINS.find(k=>k.id===id);return s?s.tier:0}
+function skinAnimated(id){return !!skinFx(id)||skinTier(id)===4}
 const BODYPX=[];PENROWS.forEach((r,y)=>{for(let x=0;x<16;x++)if(r[x]==='B')BODYPX.push([x,y])});
 function sweepD(x,now,speed,cols){const p=((now/speed)%44)-10;for(let yy=0;yy<16;yy++)for(let xx=0;xx<16;xx++){const d=xx+yy-p;if(d>=0&&d<3){x.fillStyle=cols[d<1?0:1];x.fillRect(xx,yy,1,1)}}}
 // スキンごとの演出。ランク3＝色違い＋光・炎などの演出、ランク5＝さらに少し動く（ゆれる・まばたき・点滅）
@@ -208,7 +209,7 @@ const SILH=new Set();PENROWS.forEach((r,y)=>{for(let x=0;x<16;x++)if(r[x]!=='.')
 const AURA_CELLS=[];for(let y=-3;y<19;y++)for(let x=-3;x<19;x++){if(SILH.has(x+','+y))continue;let n=99;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++)if(SILH.has((x+dx)+','+(y+dy)))n=Math.min(n,Math.abs(dx)+Math.abs(dy));if(n<=3)AURA_CELLS.push([x,y,n])}
 // こん: 体のまわりが星あかり（白と水色）でふわっと光って脈打つ（絵の外側にも出る）
 function skinAura(id,now,cxp,cyp,al){if(skinFx(id)!=='galaxy')return;const a=.28+.22*Math.sin(now/330);for(const q of AURA_CELLS){cx.globalAlpha=Math.max(0,Math.min(1,(q[2]<=1?a+.15:a*.55)*al));P(cxp+q[0],cyp+q[1],1,1,q[2]<=1?'#f4fbff':'#7fc8ff')}cx.globalAlpha=1}
-function skinMotion(id,now){const f=skinFx(id);if(f==='ghost')return{dx:0,dy:Math.round(Math.sin(now/260)*2),a:.82+.18*Math.sin(now/400)};if(f==='robot')return{dx:Math.round(Math.sin(now/300)*2),dy:Math.floor(now/280)%2?-1:0,a:1};return{dx:0,dy:0,a:1}}
+function skinMotion(id,now){const f=skinFx(id);if(skinTier(id)===4){let h=0;for(const ch of id)h+=ch.charCodeAt(0);const c=(now+(h%5)*360)%1800,j=c<350?Math.round(Math.sin(c/350*Math.PI)*4):0;return{dx:0,dy:-j,a:1}}if(f==='ghost')return{dx:0,dy:Math.round(Math.sin(now/260)*2),a:.82+.18*Math.sin(now/400)};if(f==='robot')return{dx:Math.round(Math.sin(now/300)*2),dy:Math.floor(now/280)%2?-1:0,a:1};return{dx:0,dy:0,a:1}}
 const SKPART={gold:'#ffb300',silver:'#8fb8ff'};
 function skinParticles(id,now,cxp,cyp){const f=skinFx(id);if(!f)return;
   if(SKPART[f]){const c=SKPART[f];if(Math.random()<0.12&&fx.filter(q=>q.k==='gl').length<8)fx.push({k:'gl',t:now,dx:2+(Math.random()*12|0),dy:1+(Math.random()*13|0)});
@@ -559,7 +560,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261102-2004';
+const BUILD='20261102-2009';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
