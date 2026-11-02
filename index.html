@@ -43,13 +43,25 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .opt{background:#0f2a44;border:2px solid #27507a;border-radius:6px;padding:2px;width:46px;height:46px;cursor:pointer;flex:none}
 .opt canvas{width:100%;height:100%;border:0;background:none;border-radius:0;display:block}
 .opt.cur{border-color:var(--ac);background:#22476b}
+
+.bar div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.bar canvas.hi{width:28px;height:28px;border:0;background:none;border-radius:0}
+.btns .act{flex:1;height:62px;border:2px solid;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.btns .act canvas{width:40px;height:40px;border:0;background:none;border-radius:0;display:block}
+.btns .a-undo{background:#1c4468;border-color:#3f7fb5}
+.btns .a-reset{background:#7a3d10;border-color:#e07a1f;flex:1.5}
+.btns .a-hint{background:#6b5a10;border-color:#ffd24a}
+.btns .act:active{transform:translateY(1px);filter:brightness(1.25);background-color:inherit}
+.btns .act:disabled{opacity:.35;cursor:default;filter:none;transform:none}
+.dpad button canvas{width:30px;height:30px;border:0;background:none;display:block;margin:auto;border-radius:0}
+.sk em canvas{width:16px;height:16px;border:0;background:none;display:inline-block;vertical-align:middle;border-radius:0}
 </style></head><body>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
-<div class="bar"><div class="fl">階<b id="fl">1F</b></div><div>手数（最短）<b id="mv">0</b></div><div>落下<b id="fa">0</b></div><div>最高到達<b id="bs">1F</b></div></div>
+<div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><b id="bs">1F</b></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div></div>
-<div class="dpad" id="dp"><span></span><button data-d="0">▲</button><span></span><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button></div>
-<div class="btns"><button id="undo">↩ 1手戻す</button><button id="reset">🔄 この階を最初から</button><button id="hint">💡 次の一手</button></div>
+<div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
+<div class="btns"><button id="undo" class="act a-undo" title="1手戻す" aria-label="1手戻す"><canvas class="ai" data-i="undo"></canvas></button><button id="reset" class="act a-reset" title="この階を最初からやり直す" aria-label="この階を最初からやり直す"><canvas class="ai" data-i="reset"></canvas></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas></button></div>
 <div class="opts" id="opts"></div><div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
@@ -261,12 +273,12 @@ function openChest(x,y){if(g[y][x]!=='B')return;g[y][x]='b';curRows[y]=curRows[y
   const s=pool[Math.floor(Math.random()*pool.length)];OWNED.push(s.id);ST.set('ice_skins',JSON.stringify(OWNED));
   toast('🎁 スキン「'+s.name+'」をゲット！<br><span style="font-size:12px;color:#9bbbd6">右上のペンギンのアイコンから着替えられる</span>',2400);renderSkins();paintIcon()}
 function paintIcon(){const c=$('#skinico').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,16,16);c.drawImage(skinSprite(SKIN,performance.now()),0,0)}
-function renderSkins(){const el=$('#skinpanel');el.innerHTML='<div class="skh">スキン '+OWNED.length+' / '+SKINS.length+'（宝箱で増える）</div><div class="skg"></div>';const gr=el.querySelector('.skg');
+function renderSkins(){const el=$('#skinpanel');el.innerHTML='<div class="skh">スキン '+OWNED.length+' / '+SKINS.length+'</div><div class="skg"></div>';const gr=el.querySelector('.skg');
   SKINS.forEach(s=>{const own=OWNED.includes(s.id);const b=document.createElement('button');b.type='button';b.className='sk'+(s.id===SKIN?' cur':'')+(own?'':' lock');
     const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(skinSprite(s.id,0),0,0);
     if(!own){x.globalCompositeOperation='source-atop';x.fillStyle='#0a1a2a';x.fillRect(0,0,16,16)}
     b.appendChild(c);const l=document.createElement('span');l.textContent=own?s.name:'？？？';b.appendChild(l);
-    if(!own){const h=document.createElement('em');h.textContent=TIERFLOOR[s.tier]+'階〜の宝箱';b.appendChild(h)}
+    if(!own){const h=document.createElement('em');const cc=document.createElement('canvas');cc.width=16;cc.height=16;cc.getContext('2d').drawImage(CHEST,0,0);h.appendChild(cc);h.appendChild(document.createTextNode(TIERFLOOR[s.tier]+'F〜'));b.appendChild(h)}
     b.onclick=()=>{if(!own)return;SKIN=s.id;ST.set('ice_skin',SKIN);renderSkins();paintIcon()};gr.appendChild(b)})}
 
 /* ===== 設定は絵のボタンで選ぶ（文字でなく見た目で分かるように） ===== */
@@ -276,6 +288,26 @@ function icoDpad(c){P(7,2,4,14,'#9bbbd6');P(2,7,14,4,'#9bbbd6');P(8,8,2,2,'#2750
 function icoTrail(c,on){if(on){P(2,8,10,2,'rgba(255,255,255,.35)');P(5,8,7,2,'rgba(255,255,255,.65)');P(8,8,4,2,'#fff')}P(12,6,5,6,'#2f4a86');P(13,7,3,3,'#f4f8ff');P(14,8,1,1,'#ffa21f')}
 function icoCrack(c,on){cx=c;if(on){FL['c'](1,1)}else{FL['.'](1,1);for(let i=0;i<14;i++)P(2+i,15-i,2,1,'#e0443c')}cx=MAIN}
 function icoVision(c,r){for(let y=0;y<9;y++)for(let x=0;x<9;x++){const lit=r>=4||(Math.abs(x-4)<=r&&Math.abs(y-4)<=r);P(x*2,y*2,2,2,lit?'#c9f0fb':'#0a1a2a');if(lit&&(x+y)%2===0)P(x*2,y*2,2,2,'#bfe8f6')}P(8,8,2,2,'#2f4a86');P(8,8,1,1,'#f4f8ff')}
+
+/* ===== 画面の主な操作・数字を絵にする ===== */
+function iconOn(cv,w,h,fn){cv.width=w;cv.height=h;const x=cv.getContext('2d');x.imageSmoothingEnabled=false;cx=x;fn();cx=MAIN}
+function ringPx(px0,py0,r,a0,a1,w,col){for(let a=a0;a<=a1;a+=5){const rad=a*Math.PI/180;P(Math.round(px0+r*Math.cos(rad)-w/2),Math.round(py0+r*Math.sin(rad)-w/2),w,w,col)}}
+const HUD_ICON={
+ stairs:()=>FL['G'](0,0),
+ steps:()=>{P(3,3,4,6,'#9bbbd6');P(3,10,4,2,'#9bbbd6');P(9,5,4,6,'#9bbbd6');P(9,12,4,2,'#9bbbd6')},
+ hole:()=>FL['hole'](0,0),
+ crown:()=>{P(2,6,12,7,'#ffd24a');P(2,4,2,3,'#ffd24a');P(7,3,2,4,'#ffd24a');P(12,4,2,3,'#ffd24a');P(2,12,12,2,'#c9981a');P(4,8,2,2,'#e0443c');P(7,8,2,2,'#2f7bd6');P(10,8,2,2,'#2f9b55')}
+};
+const ACT_ICON={
+ undo:()=>{P(8,4,6,2,'#eaf6ff');P(12,4,2,8,'#eaf6ff');P(6,10,8,2,'#eaf6ff');P(6,8,1,6,'#eaf6ff');P(5,9,1,4,'#eaf6ff');P(4,10,1,2,'#eaf6ff')},
+ reset:()=>{ringPx(9,10,5.5,20,305,2,'#ffe3a8');const T3=[[15.5,8],[10,6],[14,2.5]];for(let y=0;y<18;y++)for(let x=0;x<18;x++){const px_=x+.5,py_=y+.5;const sg=(a,b,c)=>(a[0]-c[0])*(b[1]-c[1])-(b[0]-c[0])*(a[1]-c[1]);const d1=sg([px_,py_],T3[0],T3[1]),d2=sg([px_,py_],T3[1],T3[2]),d3=sg([px_,py_],T3[2],T3[0]);if(!((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0)))P(x,y,1,1,'#ffe3a8')}P(8,8,1,5,'#fff');P(9,8,3,2,'#e0443c')},
+ hint:()=>{for(let y=0;y<18;y++)for(let x=0;x<18;x++){if(Math.hypot(x-9,y-7.5)<=4.6)P(x,y,1,1,'#ffd24a')}P(7,5,2,2,'#fff6c8');P(7,12,5,1,'#9bbbd6');P(7,13,5,1,'#6d93ad');P(8,14,3,1,'#6d93ad');P(8,0,1,2,'#ffd24a');P(1,6,2,1,'#ffd24a');P(15,6,2,1,'#ffd24a');P(3,1,1,1,'#ffd24a');P(14,1,1,1,'#ffd24a')}
+};
+function arrowIcon(a){cx.save();cx.translate(8,8);cx.rotate(a*Math.PI/2);cx.translate(-8,-8);P(7,2,2,1,'#eaf6ff');P(6,3,4,1,'#eaf6ff');P(5,4,6,1,'#eaf6ff');P(4,5,8,1,'#eaf6ff');P(6,6,4,8,'#eaf6ff');cx.restore()}
+function buildIcons(){
+  document.querySelectorAll('canvas.hi').forEach(c=>iconOn(c,16,16,HUD_ICON[c.dataset.i]));
+  document.querySelectorAll('canvas.ai').forEach(c=>iconOn(c,18,18,ACT_ICON[c.dataset.i]));
+  document.querySelectorAll('canvas.ar').forEach(c=>iconOn(c,16,16,()=>arrowIcon(+c.dataset.a)))}
 function buildOpts(){
   const G=[
    ['ctl',[['swipe',c=>icoSwipe(c),'スワイプで操作'],['dpad',c=>icoDpad(c),'十字ボタンで操作']]],
@@ -300,7 +332,7 @@ function load(n,rows){
   if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();
 }
 let reqLen=0;
-function draw_hud(){$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F'}
+function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F'}
 function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
 function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
 function act(d){
@@ -369,6 +401,6 @@ function frame(now){
 (function(){const items=[['.','氷（止まれない）'],['s','石の床（止まる）'],['c','ひび割れ（通ると穴）'],['hole','穴（落ちる）'],['o','障害物（氷の塊）'],['G','階段（上の階へ）']];
   $('#leg').innerHTML=items.map(it=>`<span><canvas width="16" height="16" data-k="${it[0]}"></canvas>${it[1]}</span>`).join('');
   document.querySelectorAll('#leg canvas').forEach(c=>{cx=c.getContext('2d');cx.imageSmoothingEnabled=false;tile(c.dataset.k,0,0)});cx=MAIN})();
-buildOpts();paintIcon();renderSkins();load(1);requestAnimationFrame(frame);
+buildIcons();buildOpts();paintIcon();renderSkins();load(1);requestAnimationFrame(frame);
 </script>
 </body></html>
