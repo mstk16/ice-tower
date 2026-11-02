@@ -46,7 +46,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 <div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option><option value="1">狭い（3×3）</option></select></label><label>視界の形 <select id="vs"><option value="sq">四角（周囲すべて）</option><option value="dm">ひし形（縦横の合計）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。視界が「ふつう」「狭い」のときは、10階より上でたまに宝箱が出る。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ。5階・10階・15階…と5の倍数の階に着くたびに、階段までの必要な操作回数が1回増える。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5・狭い3×3）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。視界が「ふつう」「狭い」のときは、10階より上でたまに宝箱が出る。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。5階・10階・15階…と5の倍数の階に着くたびに、階段までの必要な操作回数が1回増える。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5・狭い3×3）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -208,11 +208,29 @@ function genOne(floor,seed){const r=mkRng(seed);const rockP=0.2+Math.min(floor,1
 const STEP=5;
 function targetLen(floor){return 3+Math.floor(Math.max(1,floor)/STEP)} // 5の倍数の階（5F・10F…）に着くたびに基準が1つ増える
 function pickWant(floor){const b=targetLen(floor);return(floor%STEP!==0&&Math.random()<0.25)?Math.max(2,b-1):b} // 倍数の階以外では、たまに1回少ない階
-function genLevelBase(floor){const f=Math.min(floor,10),want=pickWant(floor);const t0=performance.now();let near=null,nd=99;
-  while(performance.now()-t0<4000){const L=genOne(f,(Math.random()*4294967296)>>>0);const s=solveCount(L.g,L.sx,L.sy);
-    if(s.count!==1||s.nodes>=6000)continue;if(f>=2&&!NOCR&&crackUsed(L.g,L.sx,L.sy,s.best)<1)continue;
-    const d=Math.abs(s.best.length-want);if(d===0)return L.g.map(r=>r.join(''));if(d<nd){nd=d;near=L.g.map(r=>r.join(''))}}
-  return near||LEVELS[f-1].rows} // 狙いの手数が見つからなければ一番近い階／最後の保険は作り置き
+function spreadOf(gg,sx0,sy0,path){let x=sx0,y=sy0,h=[];const cells=[[x,y]];for(const d of path){const m=move(gg,h,x,y,d);for(const t of m.trail)cells.push(t);x=m.x;y=m.y;h=m.holes}
+  let a=99,b=-1,c=99,e=-1;const near=new Set();cells.forEach(([px,py])=>{a=Math.min(a,px);b=Math.max(b,px);c=Math.min(c,py);e=Math.max(e,py);for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const nx=px+dx,ny=py+dy;if(nx>=0&&ny>=0&&nx<C&&ny<R)near.add(nx+','+ny)}});
+  return{w:b-a+1,h:e-c+1,cov:near.size/(C*R)}}
+// 開始とゴールを盤面の反対の隅に置いて、短い解でも盤面を広く使わせる
+function genOneWide(floor,seed){const r=mkRng(seed);const rockP=0.2+Math.min(floor,10)*0.004,stoneP=0.09;
+  const crackN=(NOCR||floor<2)?0:Math.min(2+Math.floor((floor-2)/2),7);
+  const g=[];for(let y=0;y<R;y++){g.push([]);for(let x=0;x<C;x++){const v=r();g[y].push(v<rockP?'o':v<rockP+stoneP?'s':'.')}}
+  const left=r()<.5,top=r()<.5;
+  const pick=(xl,yt)=>{for(let i=0;i<200;i++){const x=xl?Math.floor(r()*2):C-1-Math.floor(r()*2),y=yt?Math.floor(r()*3):R-1-Math.floor(r()*3);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return null};
+  const s=pick(left,top),gl=pick(!left,!top);if(!s||!gl||(s[0]===gl[0]&&s[1]===gl[1]))return null;
+  g[s[1]][s[0]]='S';g[gl[1]][gl[0]]='G';
+  const free=()=>{for(let i=0;i<500;i++){const x=Math.floor(r()*C),y=Math.floor(r()*R);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return[0,0]};
+  for(let i=0;i<crackN;i++){const [x,y]=free();if(g[y][x]==='.')g[y][x]='c'}
+  return{g,sx:s[0],sy:s[1]}}
+function isWide(L,path,lv){const sp=spreadOf(L.g,L.sx,L.sy,path);return lv===0?(sp.w>=C-1&&sp.h>=R-1&&sp.cov>=0.5):(sp.w>=C-2&&sp.h>=R-2&&sp.cov>=0.4)} // 解が盤面のほぼ端から端まで使う（使われない部分を減らす）
+function genLevelBase(floor){const f=Math.min(floor,10),want=pickWant(floor);const t0=performance.now();let near=null,nd=99,loose=null,ld=99;
+  while(performance.now()-t0<3000){const el=performance.now()-t0;const lv=want>6?2:(el<1500?0:el<3000?1:2); // 0=広さ厳しめ 1=少しゆるめ 2=広さを問わない
+    const sd=(Math.random()*4294967296)>>>0;const L=(lv<2&&want<=6)?genOneWide(f,sd):genOne(f,sd);if(!L)continue;
+    const s=solveCount(L.g,L.sx,L.sy);if(s.count!==1||s.nodes>=6000)continue;if(f>=2&&!NOCR&&crackUsed(L.g,L.sx,L.sy,s.best)<1)continue;
+    const d=Math.abs(s.best.length-want),rows=L.g.map(r=>r.join(''));
+    if(lv<2&&!isWide(L,s.best,lv)){if(d<ld){ld=d;loose=rows}continue}
+    if(d===0)return rows;if(d<nd){nd=d;near=rows}}
+  return near||loose||LEVELS[f-1].rows} // 狙いの手数と広さが両立できなければ一番近い階／最後の保険は作り置き
 let curRows=null;
 /* ===== 宝箱（視界が「ふつう」「狭い」のときだけ。10階より上で出る） ===== */
 const CHEST_MIN=10,CHEST_RATE=0.3;
