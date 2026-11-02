@@ -70,17 +70,25 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .opt span{font-size:10px;line-height:1.1;color:var(--mu);white-space:nowrap}
 .opt.cur span{color:var(--ac)}
 .bar .hl{font-size:10px;color:var(--mu);line-height:1}
+
+.ver{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--mu)}
+.vbtn{background:var(--card);color:var(--tx);border:2px solid #27507a;border-radius:8px;padding:8px 12px;font-family:inherit;font-size:12px;cursor:pointer}
+#upd{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;background:#1f6b3a;border-top:3px solid #7dffa0;color:#fff;font-size:13px;font-weight:700;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+#upd button{font-family:inherit;font-size:13px;font-weight:700;border-radius:8px;border:2px solid #fff;padding:8px 14px;cursor:pointer}
+#updgo{background:#fff;color:#1f6b3a}#updlater{background:transparent;color:#fff}
+.btns .act span.lg{font-size:11px;line-height:1.15;text-align:center;white-space:normal}
+[hidden]{display:none!important}
 </style></head><body>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
 <div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><span class="hl">階</span><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><span class="hl">手数（最短）</span><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><span class="hl">落下</span><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><span class="hl">最高</span><b id="bs">1F</b></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
-<div class="btns"><button id="undo" class="act a-undo" title="1手戻す" aria-label="1手戻す"><canvas class="ai" data-i="undo"></canvas><span>戻す</span></button><button id="reset" class="act a-reset" title="この階を最初からやり直す" aria-label="この階を最初からやり直す"><canvas class="ai" data-i="reset"></canvas><span>やり直す</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
+<div class="btns"><button id="undo" class="act a-undo" title="1手戻す" aria-label="1手戻す"><canvas class="ai" data-i="undo"></canvas><span>戻す</span></button><button id="reset" class="act a-reset" title="スタート地点に戻る（この階を最初から）" aria-label="スタート地点に戻る"><canvas class="ai" data-i="reset"></canvas><span class="lg">スタート地点に戻る</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
 <div class="opts" id="opts"></div><div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。10階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。10階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -285,7 +293,7 @@ function genLevelBase(floor){const job=newJob(floor);let r=null;while(!(r=stepJo
 let PRE={}; // 先に作っておいた階（キー→{job,rows}）。次の階・落ちたときの階・1階を用意する
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
 function prefetch(floor){if(floor<1)return;const k=preKey(floor);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=4)delete PRE[keys[0]];PRE[k]={job:newJob(floor),rows:null};setTimeout(pump,60)}
-function pump(){const k=Object.keys(PRE).find(x=>PRE[x].job);if(!k)return;const e=PRE[k];const r=stepJob(e.job,25);if(r){e.rows=r;e.job=null}setTimeout(pump,20)}
+function pump(){const k=Object.keys(PRE).find(x=>PRE[x].job);if(!k)return;if(anim||document.hidden){setTimeout(pump,400);return}const e=PRE[k];const r=stepJob(e.job,10);if(r){e.rows=r;e.job=null}setTimeout(pump,70)}
 function takePre(floor){const k=preKey(floor);const e=PRE[k];if(!e)return null;let r=e.rows;if(!r&&e.job){let x=null;while(!(x=stepJob(e.job,1000)));r=x}delete PRE[k];return r}
 let curRows=null;
 /* ===== 宝箱（視界が「ふつう」「狭い」のときだけ。10階より上で出る） ===== */
@@ -398,6 +406,19 @@ $('#reset').onclick=()=>{if(!anim)load(fl,curRows)};
 function saveRun(){ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall}))}
 function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x==='string'&&x.length===C&&/^[.sS#oBbchGx]+$/.test(x))&&r.join('').includes('S')&&r.join('').includes('G')}
 let homeArm=false,homeT=0;
+
+/* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
+const BUILD='20261102-1908';
+let updAsked=false;
+async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
+  if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
+$('#updgo').onclick=()=>{location.replace(location.pathname+'?v='+Date.now())};
+$('#updlater').onclick=()=>{$('#upd').hidden=true};
+$('#updbtn').onclick=()=>checkUpdate(true);
+$('#vtxt').textContent='版 '+BUILD;
+setInterval(()=>{if(!document.hidden)checkUpdate(false)},300000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate(false)});
+setTimeout(()=>checkUpdate(false),4000);
 function homeDisarm(){homeArm=false;clearTimeout(homeT);const b=$('#home');b.classList.remove('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.home)}
 $('#home').onclick=()=>{if(anim)return;if(!homeArm){homeArm=true;const b=$('#home');b.classList.add('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.homeok);toast('もう一度押すと、1階からやり直す',1800);homeT=setTimeout(homeDisarm,3000);return}homeDisarm();fall=0;load(1)};
 
