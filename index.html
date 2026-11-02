@@ -214,7 +214,7 @@ function skinParticles(id,now,cxp,cyp){const f=skinFx(id);if(!f)return;
   if(SKPART[f]){const c=SKPART[f];if(Math.random()<0.12&&fx.filter(q=>q.k==='gl').length<8)fx.push({k:'gl',t:now,dx:2+(Math.random()*12|0),dy:1+(Math.random()*13|0)});
     for(const q of fx){if(q.k!=='gl')continue;const u=(now-q.t)/560,gx=cxp+q.dx,gy=cyp+q.dy;P(gx,gy,1,1,'#ffffff');if(u>=0.15&&u<0.85){P(gx-1,gy,1,1,c);P(gx+1,gy,1,1,c);P(gx,gy-1,1,1,c);P(gx,gy+1,1,1,c)}if(u>=0.3&&u<0.7){P(gx-2,gy,1,1,c);P(gx+2,gy,1,1,c);P(gx,gy-2,1,1,c);P(gx,gy+2,1,1,c)}}}
   else if(f==='emerald'){for(let i=0;i<7;i++){const gy=Math.round(cyp-10+((now/38+i*11)%36)),gx=Math.round(cxp+8+Math.sin(now/500+i*1.7)*11+(i%2?3:-3)),c=i%2?'#2fd08a':'#16b07a';P(gx,gy,1,1,c);P(gx+1,gy+1,1,1,c);P(gx+1,gy,1,1,'#0f7a52')}}
-  else if(f==='ruby'||f==='black'){if(Math.random()<0.14&&fx.filter(q=>q.k==='pt').length<9)fx.push({k:'pt',t:now,dx:3+(Math.random()*10|0),dy:12});
+  else if(f==='ruby'){if(Math.random()<0.14&&fx.filter(q=>q.k==='pt').length<9)fx.push({k:'pt',t:now,dx:3+(Math.random()*10|0),dy:12});
     for(const q of fx){if(q.k!=='pt')continue;const u=(now-q.t)/700,gx=cxp+q.dx+Math.round(Math.sin(u*6+q.dx)*1.5),gy=cyp+q.dy-Math.round(u*16);cx.globalAlpha=Math.max(0,1-u);if(f==='ruby')P(gx,gy,1,1,u<.4?'#ffd24a':'#ff6a3a');else P(gx,gy,2,2,'#6a3aa0');cx.globalAlpha=1}}}
 let OWNED=['def'],SKIN='def';
 try{const o=JSON.parse(ST.get('ice_skins','["def"]'));if(Array.isArray(o))OWNED=['def'].concat(o.filter(x=>x!=='def'&&SKINS.some(k=>k.id===x)))}catch(e){}
@@ -558,7 +558,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261102-1959';
+const BUILD='20261102-2000';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
