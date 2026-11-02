@@ -95,7 +95,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 #skinbtn.pulse2{animation:pz2 .7s}
 @keyframes pz2{0%{transform:scale(1)}30%{transform:scale(1.25);border-color:#ffd24a}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#skinbtn.pulse2{animation:none}}
-</style></head><body>
+</style>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
 <div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><span class="hl">階</span><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><span class="hl">手数（最短）</span><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><span class="hl">落下</span><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><span class="hl">最高</span><b id="bs">1F</b></div></div>
@@ -352,6 +352,83 @@ function genOneWide(floor,seed){const r=mkRng(seed);const rockP=0.22+Math.min(fl
   const free=()=>{for(let i=0;i<500;i++){const x=Math.floor(r()*C),y=Math.floor(r()*R);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return[0,0]};
   for(let i=0;i<crackN;i++){const [x,y]=free();if(g[y][x]==='.')g[y][x]='c'}
   return{g,sx:s[0],sy:s[1]}}
+// ===== 正解ルートを先に作る生成（不要な障害物を置かない・階段は外周に置かない・階段の隣に止まれる誤ルートを必ず作る） =====
+// 正解ルートを先に作り、止まるのに必要な障害物だけを置く。答えが2通り以上なら、別の答えを切る障害物を最大2個まで足す
+function otherSol(g,sx,sy,key){let found=null,nodes=0;const seen=new Set();
+  (function dfs(x,y,holes,path){if(found||nodes++>6000)return;const k=x+','+y+','+holes.slice().sort().join('.');if(seen.has(k))return;seen.add(k);
+    for(let d=0;d<4&&!found;d++){const m=move(g,holes,x,y,d);if(!m||m.res==='fall')continue;const p=path.concat(d);if(m.res==='win'){if(p.join('')!==key)found=p;continue}dfs(m.x,m.y,m.holes,p)}
+    seen.delete(k)})(sx,sy,[],[]);
+  return found}
+function genBuilt(floor,seed,want){const r=mkRng(seed),K=(x,y)=>x+','+y;
+  const ty=[];for(let y=0;y<R;y++)ty.push(new Array(C).fill('.'));
+  const sx=1+Math.floor(r()*(C-2)),sy=1+Math.floor(r()*(R-2));ty[sy][sx]='s';
+  const used=new Set([K(sx,sy)]),stops=new Set(),cnt={};let x=sx,y=sy,prev=-1,gx=-1,gy=-1;const path=[];
+  for(let i=0;i<want;i++){const last=i===want-1;let ok=false;
+    for(let tr=0;tr<16&&!ok;tr++){
+      const d=Math.floor(r()*4);if(prev>=0&&(d===prev||d===(prev+2)%4))continue;
+      const dx=D[d][0],dy=D[d][1];let maxk=0,stoneEnd=false;
+      for(;;){const nx=x+dx*(maxk+1),ny=y+dy*(maxk+1);if(!inB(nx,ny)||ty[ny][nx]==='o')break;if(ty[ny][nx]==='s'){if(!last){maxk++;stoneEnd=true}break}maxk++}
+      if(maxk<1)continue;
+      if(last){const ks=[];for(let k=1;k<=maxk;k++){const px=x+dx*k,py=y+dy*k;if(px>=2&&px<=C-3&&py>=2&&py<=R-3&&!used.has(K(px,py)))ks.push(k)}
+        if(!ks.length)continue;const k=ks[Math.floor(r()*ks.length)];
+        for(let j=1;j<=k;j++){const px=x+dx*j,py=y+dy*j;used.add(K(px,py));cnt[K(px,py)]=(cnt[K(px,py)]||0)+1}
+        gx=x+dx*k;gy=y+dy*k;path.push(d);ok=true;break}
+      const k=stoneEnd?maxk:1+Math.floor(r()*maxk);const px=x+dx*k,py=y+dy*k,qx=px+dx,qy=py+dy;let mech;
+      if(stoneEnd)mech='exist';
+      else{const op=[];if(!inB(qx,qy))op.push('edge');else if(ty[qy][qx]==='o')op.push('exist');else if(ty[qy][qx]==='.'&&!used.has(K(qx,qy)))op.push('rock','rock');
+        if(ty[py][px]==='.'&&!used.has(K(px,py)))op.push('stone','stone');if(!op.length)continue;mech=op[Math.floor(r()*op.length)]}
+      if(mech==='rock')ty[qy][qx]='o';else if(mech==='stone')ty[py][px]='s';
+      for(let j=1;j<=k;j++){const cx2=x+dx*j,cy2=y+dy*j;used.add(K(cx2,cy2));cnt[K(cx2,cy2)]=(cnt[K(cx2,cy2)]||0)+1}
+      stops.add(K(px,py));x=px;y=py;prev=d;path.push(d);ok=true}
+    if(!ok)return null}
+  const g=ty.map(row=>row.slice());g[sy][sx]='S';g[gy][gx]='G';
+  if(floor>=2&&!NOCR){const cand=[];for(const k in cnt){if(cnt[k]!==1||stops.has(k))continue;const [a,b]=k.split(',').map(Number);if(g[b][a]==='.')cand.push([a,b])}
+    if(cand.length){const c=cand[Math.floor(r()*cand.length)];g[c[1]][c[0]]='c'}}
+  // 作った道のとおりに進めるか確かめる
+  {let px=sx,py=sy,h=[],res=null;for(const d of path){const m=move(g,h,px,py,d);if(!m||m.res==='fall'){return null}px=m.x;py=m.y;h=m.holes;res=m.res}if(res!=='win')return null}
+  const key=path.join('');
+  for(let t=0;t<5;t++){const s=solveCount(g,sx,sy);if(s.count===1||s.nodes>=6000)break;
+    const alt=otherSol(g,sx,sy,key);if(!alt)break;
+    const cells=[];{let px=sx,py=sy,h=[];for(const d of alt){const m=move(g,h,px,py,d);if(!m)break;for(const [a,b] of m.trail)if(g[b][a]==='.'&&!used.has(K(a,b)))cells.push([a,b]);px=m.x;py=m.y;h=m.holes}}
+    if(!cells.length)break;const c=cells[Math.floor(r()*cells.length)];g[c[1]][c[0]]=r()<0.5?'o':'s'}
+  // 階段の隣に止まれる「惜しい誤ルート」が無いときは、階段のまわりに石の床を1つ足して作る
+  if(!nearMiss({g,sx,sy},path)){const nb=[];for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const px=gx+a,py=gy+b;if((a||b)&&inB(px,py)&&g[py][px]==='.'&&!used.has(K(px,py)))nb.push([px,py])}
+    for(let i=nb.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[nb[i],nb[j]]=[nb[j],nb[i]]}
+    for(const [px,py] of nb){g[py][px]='s';const s=solveCount(g,sx,sy);if(s.count===1&&s.nodes<6000&&s.best.join('')===key&&nearMiss({g,sx,sy},path))break;g[py][px]='.'}}
+  return{g,sx,sy}}
+
+
+function touch(g,x,y,d){const out=[];let cx_=x,cy=y;
+  for(;;){const nx=cx_+D[d][0],ny=cy+D[d][1];if(nx<0||ny<0||nx>=C||ny>=R)break;
+    const ch=g[ny][nx];if(ch==='#'||ch==='o'||ch==='B'||ch==='b'){if(ch==='o')out.push(nx+','+ny);break}
+    cx_=nx;cy=ny;if(ch==='c')out.push(nx+','+ny);if(ch==='h'||ch==='G')break;if(ch==='s'){out.push(nx+','+ny);break}if(ch==='S')break}
+  return out}
+function usage(L,path){const solSet=new Set();let x=L.sx,y=L.sy,h=[];
+  for(const d of path){for(const k of touch(L.g,x,y,d))solSet.add(k);const m=move(L.g,h,x,y,d);x=m.x;y=m.y;h=m.holes}
+  const dec=new Set(),seen=new Set(),q=[[L.sx,L.sy,[]]];seen.add(L.sx+','+L.sy+',');let nodes=0;
+  while(q.length&&nodes++<6000){const [px,py,hs]=q.shift();
+    for(let d=0;d<4;d++){for(const k of touch(L.g,px,py,d))if(!solSet.has(k))dec.add(k);
+      const m=move(L.g,hs,px,py,d);if(!m||m.res!=='ok')continue;const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);q.push([m.x,m.y,m.holes])}}
+  let tot=0;for(const r of L.g)for(const ch of r)if(ch==='o'||ch==='s'||ch==='c')tot++;
+  return{sol:solSet.size,extra:dec.size,dead:tot-solSet.size-dec.size,tot}}
+function nearMiss(L,path){let x=L.sx,y=L.sy,h=[];const solStops=new Set();
+  for(const d of path){const m=move(L.g,h,x,y,d);solStops.add(m.x+','+m.y);x=m.x;y=m.y;h=m.holes}
+  let gx=-1,gy=-1;for(let yy=0;yy<R;yy++)for(let xx=0;xx<C;xx++)if(L.g[yy][xx]==='G'){gx=xx;gy=yy}
+  const seen=new Set(),q=[[L.sx,L.sy,[]]];let nodes=0;seen.add(L.sx+','+L.sy+',');
+  while(q.length&&nodes++<6000){const [px,py,hs]=q.shift();
+    for(let d=0;d<4;d++){const m=move(L.g,hs,px,py,d);if(!m||m.res!=='ok')continue;
+      if(Math.max(Math.abs(m.x-gx),Math.abs(m.y-gy))===1&&!solStops.has(m.x+','+m.y))return true;
+      const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);q.push([m.x,m.y,m.holes])}}
+  return false}
+function prune(L,path,floor){const key=path.join('');
+  const cand=[];for(let y=0;y<R;y++)for(let x=0;x<C;x++){const ch=L.g[y][x];if(ch==='o'||ch==='s'||ch==='c')cand.push([x,y,ch])}
+  for(let i=cand.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cand[i],cand[j]]=[cand[j],cand[i]]}
+  for(const [x,y,ch] of cand){L.g[y][x]='.';const s=solveCount(L.g,L.sx,L.sy);
+    const ok=s.count===1&&s.nodes<6000&&s.best.join('')===key&&(ch!=='c'||floor<2||crackUsed(L.g,L.sx,L.sy,s.best)>=1)&&nearMiss(L,s.best);
+    if(!ok)L.g[y][x]=ch}
+  return L}
+// 答えを変えずに外せる障害物を外し、「階段の隣に止まれる誤ルート」があり、誤ルートだけで使う障害物が2個（長い階は3個）以下のものだけ通す。時間がかかりすぎたら通す
+function polish(L,path,floor,el){if(el>2600)return true;if(!nearMiss(L,path))return false;prune(L,path,floor);const u=usage(L,path);return u.dead===0&&u.extra<=(path.length>=7?3:2)}
 function isWide(L,path){const sp=spreadOf(L.g,L.sx,L.sy,path);return sp.w>=C-2&&sp.h>=R-3&&sp.cov>=0.4} // 解が盤面のほぼ端から端まで使う（使われない部分を減らす）
 // 止まる理由が「盤面の端」や「端に並んだ障害物」ばかりの階を避ける（内側の障害物・石の床で止まる手を半分以上にする）
 function onRing(x,y){return x===0||y===0||x===C-1||y===R-1}
@@ -370,24 +447,25 @@ function mixOK(L,path){const gg=L.g;let x=L.sx,y=L.sy,h=[],st=0,rk=0,tot=0;
     x=m.x;y=m.y;h=m.holes}
   return tot<2||(st>=1&&rk>=1&&st<=Math.ceil(tot*0.7)&&rk<=Math.ceil(tot*0.7))}
 function levelOK(L,path,lv,el){if(el>2800)return true;if(!turnsOK(path))return false;if(el>2300)return true;if(!mixOK(L,path))return false;if(lv<2&&!isWide(L,path))return false;if(lv===0&&!perimOK(L,path))return false;return true}
-function newJob(floor){return{floor:floor,f:Math.min(floor,10),want:pickWant(floor),work:0,near:null,nd:99,loose:null,ld:99,done:null}}
+function newJob(floor){return{ext:2,floor:floor,f:Math.min(floor,10),want:pickWant(floor),work:0,near:null,nd:99,loose:null,ld:99,done:null}}
 // 階を作る処理を小分けにして進める（遊んでいる間に次の階を先に作っておくため）
 function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.want;
   while(performance.now()-t1<budget){const el=job.work+(performance.now()-t1);
-    if(el>3000){job.work=el;job.done=job.near||job.loose||LEVELS[f-1].rows;return job.done}
+    if(el>3000){if(job.ext>0){job.ext--;job.work=-(performance.now()-t1);continue}job.work=el;job.done=job.near||job.loose||LEVELS[f-1].rows;return job.done}
+    const fe=job.ext>0?Math.min(el,2200):el; // 作り直せる間は、条件をゆるめない
     const lv=want>=8?2:(el<800?0:el<1700?1:2); // 0=広さ＋内側で止まる手を重視 1=広さだけ 2=どちらも問わない（階段は常に外周以外）
-    const sd=(Math.random()*4294967296)>>>0;const L=(lv<2&&want<=6)?genOneWide(f,sd):genOne(f,sd);if(!L)continue;
+    const sd=(Math.random()*4294967296)>>>0;const L=genBuilt(f,sd,want);if(!L)continue;
     const s=solveCount(L.g,L.sx,L.sy);if(s.count!==1||s.nodes>=6000)continue;if(f>=2&&!NOCR&&crackUsed(L.g,L.sx,L.sy,s.best)<1)continue;
-    const d=Math.abs(s.best.length-want),rows=L.g.map(r=>r.join(''));
-    if(!levelOK(L,s.best,lv,el)){if(d<job.ld){job.ld=d;job.loose=rows}continue}
-    if(d===0){job.done=rows;return rows}if(d<job.nd){job.nd=d;job.near=rows}}
+    const d=Math.abs(s.best.length-want);let rows=L.g.map(r=>r.join(''));
+    if(!levelOK(L,s.best,lv,fe)){if(d<job.ld){job.ld=d;job.loose=rows}continue}
+    if(!polish(L,s.best,f,fe))continue;rows=L.g.map(r=>r.join(''));if(d===0){job.done=rows;return rows}if(d<job.nd){job.nd=d;job.near=rows}}
   job.work+=performance.now()-t1;return null}
 function genLevelBase(floor){const job=newJob(floor);let r=null;while(!(r=stepJob(job,1000)));return r}
-function genLevelQuick(floor){const job=newJob(floor);job.work=2300;let r=null;while(!(r=stepJob(job,500)));return r} // すぐ必要なとき用（0.7秒以内。条件は少しゆるい）
+function genLevelQuick(floor){const job=newJob(floor);job.ext=0;job.work=2300;let r=null;while(!(r=stepJob(job,500)));return r} // すぐ必要なとき用（0.7秒以内。条件は少しゆるい）
 let PRE={}; // 裏で先に作っておいた階（キー→{rows}）。作るのは別スレッド（Worker）なので、遊んでいる画面は止まらない
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
 const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=11;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
-  +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,newJob,stepJob].map(f=>f.toString()).join('\n')
+  +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,prune,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
   +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
 let GW=null;
 try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
@@ -560,7 +638,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261102-2009';
+const BUILD='20261103-0112';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
