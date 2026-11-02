@@ -29,10 +29,23 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 #skinbtn{background:var(--card);border:2px solid #27507a;border-radius:6px;padding:3px;width:46px;height:46px;cursor:pointer;flex:none}
 #skinbtn canvas{width:100%;height:100%;border:0;background:none;border-radius:0}
 #skinpanel{background:var(--card);border-radius:8px;padding:8px;margin:6px 0 8px}
-#gcard{position:relative;cursor:pointer}
-#gtx{position:absolute;top:3px;right:4px;font-size:10px;color:var(--ac);line-height:1}
-#gbr{position:absolute;left:6px;right:6px;bottom:3px;height:3px;background:#0a1a2a;border-radius:2px;display:block}
-#gbr u{display:block;height:3px;background:var(--ac);border-radius:2px;width:0;text-decoration:none}
+/* 目標ボタン: 金色の立体ボタン。2.4秒ごとにぽこっと押し込まれて戻り、そのたびに輪が外へ広がる（押せると気づかせる）。
+   OSの「動きを減らす」設定では止めない（この端末で常に切れていて、気づけなかったため）。止めるのはゲーム内の「演出」が「なし」のときと、パネルを開いている間だけ */
+#gcard{position:relative;cursor:pointer;background:var(--ac);border:2px solid var(--ac);border-radius:8px;padding:5px 2px 12px;box-shadow:inset 0 3px 0 #fff0a0,0 5px 0 #8a6a10;animation:gp 2.4s infinite}
+#gcard::after{content:"";position:absolute;inset:-2px;border-radius:8px;border:2px solid var(--ac);opacity:0;pointer-events:none;animation:gr 2.4s infinite}
+#gcard .hl,#gcard b{color:#4a3200}
+#gcard b{color:#3a2800}
+#gcard .hl::after{content:"";display:inline-block;margin-left:3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #7a4a00;vertical-align:1px}
+#gcard.open .hl::after{border-top:0;border-bottom:5px solid #7a4a00}
+#gcard.open{animation:none;transform:translateY(4px);box-shadow:inset 0 3px 0 #b8941a,0 1px 0 #8a6a10}
+#gcard.open::after,#gcard.still::after,#gcard.pulse::after{animation:none;opacity:0}
+#gcard.still{animation:none}
+#gcard.pulse{animation:pz .9s}
+@keyframes gp{0%,68%{transform:translateY(0)}72%{transform:translateY(4px);box-shadow:inset 0 3px 0 #b8941a,0 1px 0 #8a6a10}80%{transform:translateY(-1px)}86%,100%{transform:translateY(0)}}
+@keyframes gr{0%,71%{opacity:0;transform:scale(1)}72%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.35,1.6)}}
+#gtx{position:absolute;top:4px;right:6px;font-size:10px;color:#7a4a00;line-height:1}
+#gbr{position:absolute;left:8px;right:8px;bottom:5px;height:3px;background:rgba(122,74,0,.25);border-radius:2px;display:block}
+#gbr u{display:block;height:3px;background:#7a4a00;border-radius:2px;width:0;text-decoration:none}
 #goalpanel{background:var(--card);border-radius:8px;padding:8px 10px;margin:6px 0 8px;font-size:12px}
 #goalpanel .gh{display:flex;justify-content:space-between;color:var(--mu)}
 #goalpanel .gr{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
@@ -735,7 +748,7 @@ function buildOpts(){
     box.appendChild(grp)});
   syncOpts()}
 function syncOpts(){document.querySelectorAll('#opts .opt').forEach(b=>b.classList.toggle('cur',$('#'+b.dataset.sel).value===b.dataset.v))}
-$('#gcard').onclick=()=>{const p=$('#goalpanel');p.hidden=!p.hidden;if(!p.hidden){renderGoals();p.scrollIntoView({block:'nearest',behavior:'smooth'})}};
+$('#gcard').onclick=()=>{const p=$('#goalpanel');p.hidden=!p.hidden;$('#gcard').classList.toggle('open',!p.hidden);$('#gcard').setAttribute('aria-expanded',String(!p.hidden));if(!p.hidden){renderGoals();p.scrollIntoView({block:'nearest',behavior:'smooth'})}};
 $('#gcard').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#gcard').click()}};
 $('#skinbtn').onclick=()=>{const p=$('#skinpanel');p.hidden=!p.hidden;if(!p.hidden)renderSkins()};
 
@@ -793,7 +806,8 @@ function mkConf(n,seed){const r=mkRng(seed);return Array.from({length:n},()=>({a
 function ovAdd(o){if(FXLV>0||o.k==='fade')OV.push(o)}
 function banner(txt,ms){if(FXLV===0)return;const e=$('#bn');e.textContent=txt;e.classList.add('on');clearTimeout(banner.t);banner.t=setTimeout(()=>e.classList.remove('on'),ms)}
 function skipFx(){if(OV.length||$('#bn').classList.contains('on')){OV.length=0;$('#bn').classList.remove('on');cv.style.transform=''}}
-function recFx(){if(FXLV===0)return;const e=$('#bs').parentElement;e.classList.remove('pulse');void e.offsetWidth;e.classList.add('pulse')}
+function recFx(){if(FXLV===0)return;const e=$('#bs').parentElement;e.classList.remove('pulse');void e.offsetWidth;e.classList.add('pulse');clearTimeout(recFx.t);recFx.t=setTimeout(()=>e.classList.remove('pulse'),1000)}
+function goalBtnFx(){$('#gcard').classList.toggle('still',FXLV===0)}
 function PA(x0,y0,w,h,c,a){cx.globalAlpha=Math.max(0,Math.min(1,a));P(x0,y0,w,h,c);cx.globalAlpha=1}
 function ovRing(x0,y0,r,col,a){if(r<1||a<=0)return;cx.globalAlpha=Math.min(1,a);cx.fillStyle=col;for(let k=0;k<360;k+=Math.max(4,Math.round(360/(r*6)))){const t=k*Math.PI/180;cx.fillRect(Math.round(x0+r*Math.cos(t)),Math.round(y0+r*Math.sin(t)),1,1)}cx.globalAlpha=1}
 function pulseSkinBtn(){const b=$('#skinbtn');b.classList.remove('pulse2');void b.offsetWidth;b.classList.add('pulse2')}
@@ -834,7 +848,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0329';
+const BUILD='20261103-0339';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -853,7 +867,7 @@ function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
 function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
 $('#vw').onchange=setView;
-$('#fx').value=String(FXLV);$('#fx').onchange=()=>{FXLV=+$('#fx').value;ST.set('ice_fx',FXLV);OV.length=0;$('#bn').classList.remove('on')};
+$('#fx').value=String(FXLV);goalBtnFx();$('#fx').onchange=()=>{FXLV=+$('#fx').value;ST.set('ice_fx',FXLV);OV.length=0;$('#bn').classList.remove('on');goalBtnFx()};
 $('#cr').onchange=()=>{if(anim)return;NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl)};
 document.querySelectorAll('#dp button').forEach(b=>b.onclick=()=>act(+b.dataset.d));
 addEventListener('keydown',e=>{const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(k!=null){e.preventDefault();act(k)}});
