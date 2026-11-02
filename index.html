@@ -58,17 +58,29 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 
 .btns .a-home{background:#3a1a22;border-color:#c04a5a;flex:.8}
 .btns .a-home.arm{background:#1f6b3a;border-color:#7dffa0}
+
+.btns .act{flex-direction:column;gap:3px;height:74px}
+.btns .act canvas{width:34px;height:34px}
+.btns .act span{font-size:12px;font-weight:700;color:var(--tx);line-height:1}
+.og{flex-direction:column;gap:3px}
+.ogr{display:flex;gap:4px}
+.gt{font-size:10px;color:var(--mu);line-height:1}
+.opt{height:auto;min-height:60px;width:50px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:3px 2px 2px}
+.opt canvas{width:34px;height:34px;flex:none}
+.opt span{font-size:10px;line-height:1.1;color:var(--mu);white-space:nowrap}
+.opt.cur span{color:var(--ac)}
+.bar .hl{font-size:10px;color:var(--mu);line-height:1}
 </style></head><body>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
-<div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><b id="bs">1F</b></div></div>
+<div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><span class="hl">階</span><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><span class="hl">手数（最短）</span><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><span class="hl">落下</span><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><span class="hl">最高</span><b id="bs">1F</b></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
-<div class="btns"><button id="undo" class="act a-undo" title="1手戻す" aria-label="1手戻す"><canvas class="ai" data-i="undo"></canvas></button><button id="reset" class="act a-reset" title="この階を最初からやり直す" aria-label="この階を最初からやり直す"><canvas class="ai" data-i="reset"></canvas></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas></button></div>
+<div class="btns"><button id="undo" class="act a-undo" title="1手戻す" aria-label="1手戻す"><canvas class="ai" data-i="undo"></canvas><span>戻す</span></button><button id="reset" class="act a-reset" title="この階を最初からやり直す" aria-label="この階を最初からやり直す"><canvas class="ai" data-i="reset"></canvas><span>やり直す</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
 <div class="opts" id="opts"></div><div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。10階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。5階・10階・15階…と5の倍数の階に着くたびに、階段までの必要な操作回数が1回増える。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。10階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -221,26 +233,28 @@ function solveCount(g,sx,sy){let count=0,best=null,nodes=0;const seen=new Set();
   return{count,best,nodes}}
 function crackUsed(g,sx,sy,path){let x=sx,y=sy,holes=[],u=0;for(const d of path){const m=move(g,holes,x,y,d);for(const [tx,ty] of m.trail)if(g[ty][tx]==='c')u++;x=m.x;y=m.y;holes=m.holes}return u}
 function onRingXY(x,y){return x===0||y===0||x===C-1||y===R-1}
-function genOne(floor,seed){const r=mkRng(seed);const rockP=0.2+Math.min(floor,10)*0.004,stoneP=0.09;
+function genOne(floor,seed){const r=mkRng(seed);const rockP=0.27+Math.min(floor,10)*0.004,stoneP=0.09;
   const crackN=(NOCR||floor<2)?0:Math.min(2+Math.floor((floor-2)/2),7);
   const g=[];for(let y=0;y<R;y++){g.push([]);for(let x=0;x<C;x++){const v=r();{const rp=(x===0||y===0||x===C-1||y===R-1)?rockP*0.35:rockP;g[y].push(v<rp?'o':v<rp+stoneP?'s':'.')}}}
   const free=()=>{for(let i=0;i<500;i++){const x=Math.floor(r()*C),y=Math.floor(r()*R);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return[0,0]};
-  const [sx,sy]=free();g[sy][sx]='S';let gx=-1,gy=-1;for(let i=0;i<80;i++){const q=free();if(!onRingXY(q[0],q[1])&&g[q[1]][q[0]]==='.'){gx=q[0];gy=q[1];break}}if(gx<0)return null;g[gy][gx]='G';
+  let sx=-1,sy=-1;for(let i=0;i<80;i++){const q=free();if(!onRingXY(q[0],q[1])){sx=q[0];sy=q[1];break}}if(sx<0)return null;g[sy][sx]='S';let gx=-1,gy=-1;for(let i=0;i<80;i++){const q=free();if(q[0]>=2&&q[0]<=C-3&&q[1]>=2&&q[1]<=R-3&&g[q[1]][q[0]]==='.'){gx=q[0];gy=q[1];break}}if(gx<0)return null;g[gy][gx]='G';
   for(let i=0;i<crackN;i++){const [x,y]=free();if(g[y][x]==='.')g[y][x]='c'}
   return{g,sx,sy}}
 const STEP=5;
-function targetLen(floor){return 3+Math.floor(Math.max(1,floor)/STEP)} // 5の倍数の階（5F・10F…）に着くたびに基準が1つ増える
-function pickWant(floor){const b=targetLen(floor);return(floor%STEP!==0&&Math.random()<0.25)?Math.max(2,b-1):b} // 倍数の階以外では、たまに1回少ない階
+const INCS=(()=>{const r=mkRng(20241102),a=[];for(let i=0;i<40;i++)a.push(r()<0.5?1:2);return a})(); // 5の倍数の階ごとの増え方（1回か2回。順番は毎回同じで、先が読みにくいようにばらつかせる）
+const MAX_LEN=11; // 7×8の盤面で「進み方が1通り」を作れる長さの上限
+function targetLen(floor){const t=Math.floor(Math.max(1,floor)/STEP);let n=4;for(let i=0;i<t;i++)n+=INCS[i%INCS.length];return Math.min(n,MAX_LEN)} // 1〜4階は4手、5の倍数の階で1〜2手ずつ増える // 5の倍数の階（5F・10F…）に着くたびに基準が1つ増える
+function pickWant(floor){const b=targetLen(floor);return(floor%STEP!==0&&Math.random()<0.25)?Math.max(3,b-1):b} // 倍数の階以外では、たまに1回少ない階
 function spreadOf(gg,sx0,sy0,path){let x=sx0,y=sy0,h=[];const cells=[[x,y]];for(const d of path){const m=move(gg,h,x,y,d);for(const t of m.trail)cells.push(t);x=m.x;y=m.y;h=m.holes}
   let a=99,b=-1,c=99,e=-1;const near=new Set();cells.forEach(([px,py])=>{a=Math.min(a,px);b=Math.max(b,px);c=Math.min(c,py);e=Math.max(e,py);for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const nx=px+dx,ny=py+dy;if(nx>=0&&ny>=0&&nx<C&&ny<R)near.add(nx+','+ny)}});
   return{w:b-a+1,h:e-c+1,cov:near.size/(C*R)}}
 // 開始とゴールを盤面の反対の隅に置いて、短い解でも盤面を広く使わせる
-function genOneWide(floor,seed){const r=mkRng(seed);const rockP=0.2+Math.min(floor,10)*0.004,stoneP=0.09;
+function genOneWide(floor,seed){const r=mkRng(seed);const rockP=0.27+Math.min(floor,10)*0.004,stoneP=0.09;
   const crackN=(NOCR||floor<2)?0:Math.min(2+Math.floor((floor-2)/2),7);
   const g=[];for(let y=0;y<R;y++){g.push([]);for(let x=0;x<C;x++){const v=r();{const rp=(x===0||y===0||x===C-1||y===R-1)?rockP*0.35:rockP;g[y].push(v<rp?'o':v<rp+stoneP?'s':'.')}}}
   const left=r()<.5,top=r()<.5;
   const pick=(xl,yt)=>{for(let i=0;i<200;i++){const x=xl?1+Math.floor(r()*2):C-2-Math.floor(r()*2),y=yt?1+Math.floor(r()*3):R-2-Math.floor(r()*3);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return null};
-  const s=pick(left,top),gl=pick(!left,!top);if(!s||!gl||(s[0]===gl[0]&&s[1]===gl[1]))return null;
+  const pickG=(xl,yt)=>{for(let i=0;i<200;i++){const x=xl?2+Math.floor(r()*2):C-3-Math.floor(r()*2),y=yt?2+Math.floor(r()*2):R-3-Math.floor(r()*2);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return null};const s=pick(left,top),gl=pickG(!left,!top);if(!s||!gl||(s[0]===gl[0]&&s[1]===gl[1]))return null;
   g[s[1]][s[0]]='S';g[gl[1]][gl[0]]='G';
   const free=()=>{for(let i=0;i<500;i++){const x=Math.floor(r()*C),y=Math.floor(r()*R);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return[0,0]};
   for(let i=0;i<crackN;i++){const [x,y]=free();if(g[y][x]==='.')g[y][x]='c'}
@@ -248,19 +262,19 @@ function genOneWide(floor,seed){const r=mkRng(seed);const rockP=0.2+Math.min(flo
 function isWide(L,path){const sp=spreadOf(L.g,L.sx,L.sy,path);return sp.w>=C-2&&sp.h>=R-3&&sp.cov>=0.4} // 解が盤面のほぼ端から端まで使う（使われない部分を減らす）
 // 止まる理由が「盤面の端」や「端に並んだ障害物」ばかりの階を避ける（内側の障害物・石の床で止まる手を半分以上にする）
 function onRing(x,y){return x===0||y===0||x===C-1||y===R-1}
-function perimOK(L,path){const gg=L.g;let x=L.sx,y=L.sy,h=[],good=0,tot=0;
+function perimOK(L,path){const gg=L.g;let x=L.sx,y=L.sy,h=[],good=0,tot=0,edge=0;
   for(let i=0;i<path.length-1;i++){const d=path[i];const m=move(gg,h,x,y,d);if(!m)return false;tot++;
     const ch=gg[m.y][m.x];let inner;
     if(ch==='s'||ch==='S')inner=!onRing(m.x,m.y);
     else{const nx=m.x+D[d][0],ny=m.y+D[d][1];inner=inB(nx,ny)&&!onRing(nx,ny)&&gg[ny][nx]==='o'}
-    if(inner)good++;x=m.x;y=m.y;h=m.holes}
-  return tot===0||good>=Math.ceil(tot*0.5)}
+    if(inner)good++;else if(ch!=='s'&&ch!=='S'&&!(inB(m.x+D[d][0],m.y+D[d][1])))edge++;x=m.x;y=m.y;h=m.holes}
+  return tot===0||(good>=Math.ceil(tot*0.5)&&edge<=Math.floor(tot/2))}
 function newJob(floor){return{floor:floor,f:Math.min(floor,10),want:pickWant(floor),work:0,near:null,nd:99,loose:null,ld:99,done:null}}
 // 階を作る処理を小分けにして進める（遊んでいる間に次の階を先に作っておくため）
 function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.want;
   while(performance.now()-t1<budget){const el=job.work+(performance.now()-t1);
     if(el>3000){job.work=el;job.done=job.near||job.loose||LEVELS[f-1].rows;return job.done}
-    const lv=el<700?0:el<1500?1:2; // 0=広さ＋内側で止まる手を重視 1=広さだけ 2=どちらも問わない（階段は常に外周以外）
+    const lv=want>=8?2:(el<1500?0:el<2300?1:2); // 0=広さ＋内側で止まる手を重視 1=広さだけ 2=どちらも問わない（階段は常に外周以外）
     const sd=(Math.random()*4294967296)>>>0;const L=(lv<2&&want<=6)?genOneWide(f,sd):genOne(f,sd);if(!L)continue;
     const s=solveCount(L.g,L.sx,L.sy);if(s.count!==1||s.nodes>=6000)continue;if(f>=2&&!NOCR&&crackUsed(L.g,L.sx,L.sy,s.best)<1)continue;
     const d=Math.abs(s.best.length-want),rows=L.g.map(r=>r.join(''));
@@ -268,11 +282,11 @@ function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.w
     if(d===0){job.done=rows;return rows}if(d<job.nd){job.nd=d;job.near=rows}}
   job.work+=performance.now()-t1;return null}
 function genLevelBase(floor){const job=newJob(floor);let r=null;while(!(r=stepJob(job,1000)));return r}
-let PRE={key:null,job:null,rows:null};
+let PRE={}; // 先に作っておいた階（キー→{job,rows}）。次の階・落ちたときの階・1階を用意する
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
-function prefetch(floor){const k=preKey(floor);if(PRE.key===k)return;PRE={key:k,job:newJob(floor),rows:null};setTimeout(pump,60)}
-function pump(){if(!PRE.job)return;const r=stepJob(PRE.job,25);if(r){PRE.rows=r;PRE.job=null}else setTimeout(pump,20)}
-function takePre(floor){if(PRE.key!==preKey(floor))return null;let r=PRE.rows;if(!r&&PRE.job){let x=null;while(!(x=stepJob(PRE.job,1000)));r=x}PRE={key:null,job:null,rows:null};return r}
+function prefetch(floor){if(floor<1)return;const k=preKey(floor);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=4)delete PRE[keys[0]];PRE[k]={job:newJob(floor),rows:null};setTimeout(pump,60)}
+function pump(){const k=Object.keys(PRE).find(x=>PRE[x].job);if(!k)return;const e=PRE[k];const r=stepJob(e.job,25);if(r){e.rows=r;e.job=null}setTimeout(pump,20)}
+function takePre(floor){const k=preKey(floor);const e=PRE[k];if(!e)return null;let r=e.rows;if(!r&&e.job){let x=null;while(!(x=stepJob(e.job,1000)));r=x}delete PRE[k];return r}
 let curRows=null;
 /* ===== 宝箱（視界が「ふつう」「狭い」のときだけ。10階より上で出る） ===== */
 const CHEST_MIN=10,CHEST_RATE=0.1; // 10階から・難易度（視界・ひび割れ）に関係なく、階を作るたびに10%
@@ -333,6 +347,8 @@ function buildIcons(){
   document.querySelectorAll('canvas.hi').forEach(c=>iconOn(c,16,16,HUD_ICON[c.dataset.i]));
   document.querySelectorAll('canvas.ai').forEach(c=>iconOn(c,18,18,ACT_ICON[c.dataset.i]));
   document.querySelectorAll('canvas.ar').forEach(c=>iconOn(c,16,16,()=>arrowIcon(+c.dataset.a)))}
+const OPT_SHORT={ctl:{swipe:'スワイプ',dpad:'十字'},tr:{'1':'軌跡あり','0':'軌跡なし'},cr:{'1':'ひび割れ','0':'割れ無し'},vw:{'0':'全体','3':'広い','2':'ふつう'}};
+const OPT_TITLE={ctl:'操作',tr:'軌跡',cr:'ひび割れの床',vw:'視界'};
 function buildOpts(){
   const G=[
    ['ctl',[['swipe',c=>icoSwipe(c),'スワイプで操作'],['dpad',c=>icoDpad(c),'十字ボタンで操作']]],
@@ -341,10 +357,10 @@ function buildOpts(){
    ['vw',[['0',c=>icoVision(c,9),'全体が見える'],['3',c=>icoVision(c,3),'視界 広い'],['2',c=>icoVision(c,2),'視界 ふつう']]]
   ];
   const box=$('#opts');box.innerHTML='';
-  G.forEach(([sel,opts])=>{const grp=document.createElement('div');grp.className='og';
+  G.forEach(([sel,opts])=>{const grp=document.createElement('div');grp.className='og';const gt=document.createElement('div');gt.className='gt';gt.textContent=OPT_TITLE[sel]||'';grp.appendChild(gt);const row=document.createElement('div');row.className='ogr';grp.appendChild(row);
     opts.forEach(([v,draw,name])=>{const b=document.createElement('button');b.type='button';b.className='opt';b.dataset.sel=sel;b.dataset.v=v;b.title=name;b.setAttribute('aria-label',name);
-      const c=document.createElement('canvas');c.width=18;c.height=18;const x=c.getContext('2d');setIco(x);cx=x;draw(x);cx=MAIN;b.appendChild(c);
-      b.onclick=()=>{if(anim)return;const s=$('#'+sel);s.value=v;s.dispatchEvent(new Event('change'));syncOpts()};grp.appendChild(b)});
+      const c=document.createElement('canvas');c.width=18;c.height=18;const x=c.getContext('2d');setIco(x);cx=x;draw(x);cx=MAIN;b.appendChild(c);const sp=document.createElement('span');sp.textContent=(OPT_SHORT[sel]||{})[v]||'';b.appendChild(sp);
+      b.onclick=()=>{if(anim)return;const s=$('#'+sel);s.value=v;s.dispatchEvent(new Event('change'));syncOpts()};row.appendChild(b)});
     box.appendChild(grp)});
   syncOpts()}
 function syncOpts(){document.querySelectorAll('#opts .opt').forEach(b=>b.classList.toggle('cur',$('#'+b.dataset.sel).value===b.dataset.v))}
@@ -354,7 +370,7 @@ function load(n,rows){
   fl=Math.max(1,n);curRows=rows||genLevel(fl);g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
-  if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();saveRun();prefetch(fl+1);
+  if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();saveRun();prefetch(fl+1);if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1);
 }
 let reqLen=0;
 function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F'}
