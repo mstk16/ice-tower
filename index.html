@@ -86,14 +86,23 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .bx{display:block;width:14px;height:14px;border:2px solid #27507a;border-radius:3px;background:#0a1a2a}
 .pr .ar{color:var(--mu)}
 .pr{flex-wrap:nowrap;white-space:nowrap}.pr .rs{width:auto;min-width:52px}.pr .ar+.rs{min-width:64px}
+
+#bn{position:absolute;left:50%;top:8%;transform:translateX(-50%);background:rgba(10,26,42,.92);border:2px solid var(--ac);padding:5px 14px;font-size:16px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .12s;white-space:nowrap}
+#bn.on{opacity:1}
+.bar div.pulse{animation:pz .9s}
+@keyframes pz{0%{transform:scale(1)}30%{transform:scale(1.14);background:#2a5a3a}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.bar div.pulse{animation:none}}
+#skinbtn.pulse2{animation:pz2 .7s}
+@keyframes pz2{0%{transform:scale(1)}30%{transform:scale(1.25);border-color:#ffd24a}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){#skinbtn.pulse2{animation:none}}
 </style></head><body>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
 <div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><span class="hl">階</span><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><span class="hl">手数（最短）</span><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><span class="hl">落下</span><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><span class="hl">最高</span><b id="bs">1F</b></div></div>
-<div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div></div>
+<div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
 <div class="btns"><button id="undo" class="act a-undo" title="1つ戻す" aria-label="1つ戻す"><canvas class="ai" data-i="undo"></canvas><span>1つ戻す</span></button><button id="reset" class="act a-reset" title="スタート地点に戻る（この階を最初から）" aria-label="スタート地点に戻る"><canvas class="ai" data-i="reset"></canvas><span class="lg">スタート地点に戻る</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
-<div class="opts" id="opts"></div><div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
+<div class="opts" id="opts"></div><div class="row"><label>演出 <select id="fx"><option value="2">標準</option><option value="1">控えめ</option><option value="0">なし</option></select></label><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
 <div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。5階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ランクが高いほど出にくく、高い階でしか出ない。ペンギンの色違いは5階から、ペンギン以外のスキンは30階から。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
@@ -348,11 +357,16 @@ function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.w
     if(d===0){job.done=rows;return rows}if(d<job.nd){job.nd=d;job.near=rows}}
   job.work+=performance.now()-t1;return null}
 function genLevelBase(floor){const job=newJob(floor);let r=null;while(!(r=stepJob(job,1000)));return r}
-let PRE={}; // 先に作っておいた階（キー→{job,rows}）。次の階・落ちたときの階・1階を用意する
+function genLevelQuick(floor){const job=newJob(floor);job.work=2300;let r=null;while(!(r=stepJob(job,500)));return r} // すぐ必要なとき用（0.7秒以内。条件は少しゆるい）
+let PRE={}; // 裏で先に作っておいた階（キー→{rows}）。作るのは別スレッド（Worker）なので、遊んでいる画面は止まらない
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
-function prefetch(floor){if(floor<1)return;const k=preKey(floor);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=4)delete PRE[keys[0]];PRE[k]={job:newJob(floor),rows:null};setTimeout(pump,60)}
-function pump(){const k=Object.keys(PRE).find(x=>PRE[x].job);if(!k)return;if(anim||document.hidden){setTimeout(pump,400);return}const e=PRE[k];const r=stepJob(e.job,10);if(r){e.rows=r;e.job=null}setTimeout(pump,70)}
-function takePre(floor){const k=preKey(floor);const e=PRE[k];if(!e)return null;let r=e.rows;if(!r&&e.job){let x=null;while(!(x=stepJob(e.job,1000)));r=x}delete PRE[k];return r}
+const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=11;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
+  +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,newJob,stepJob].map(f=>f.toString()).join('\n')
+  +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
+let GW=null;
+try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
+function prefetch(floor){if(floor<1||!GW)return;const k=preKey(floor);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=4)delete PRE[keys[0]];PRE[k]={rows:null};try{GW.postMessage({id:k,floor:floor,nc:NOCR?1:0})}catch(e){delete PRE[k]}}
+function takePre(floor){const k=preKey(floor),e=PRE[k];if(!e||!e.rows)return null;delete PRE[k];return e.rows}
 let curRows=null;
 /* ===== 宝箱（視界が「ふつう」「狭い」のときだけ。10階より上で出る） ===== */
 const CHEST_MIN=5,CHEST_RATE=0.1; // 5階から・難易度（視界・ひび割れ）に関係なく、階を作るたびに10%
@@ -369,7 +383,7 @@ function bumpableRocks(rows){const gg=rows.map(r=>r.split(''));let x0=0,y0=0;gg.
   return [...hits].map(t=>t.split(',').map(Number))}
 function addChest(rows,floor){if(!chestPossible(floor)||Math.random()>=CHEST_RATE)return rows;const c=bumpableRocks(rows);if(!c.length)return rows;
   const [x,y]=c[Math.floor(Math.random()*c.length)];const r=rows.slice();r[y]=r[y].substring(0,x)+'B'+r[y].substring(x+1);return r}
-function genLevel(floor){return addChest(takePre(floor)||genLevelBase(floor),floor)}
+function genLevel(floor){return addChest(takePre(floor)||genLevelQuick(floor),floor)}
 function chestAt(floor){return SKINS.some(k=>k.tier>0&&MINF[k.tier]<=floor&&!OWNED.includes(k.id))}
 function pickTierAvail(floor){const ts=[];for(let t=1;t<=MAXT;t++)if(MINF[t]<=floor&&unownedIn(t).length)ts.push(t);if(!ts.length)return 0;let r=Math.random()*ts.reduce((a,t)=>a+RARITY[t].w,0);for(const t of ts){r-=RARITY[t].w;if(r<0)return t}return ts[0]}
 function pickUnowned(t){const u=unownedIn(t);return u[Math.floor(Math.random()*u.length)]}
@@ -379,7 +393,7 @@ function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s
   saveSkins();return{s,promos}}
 function openChest(x,y){if(g[y][x]!=='B')return;g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
   const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
-  const R1=RARITY[r.s.tier];let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';
+  const R1=RARITY[r.s.tier];ovAdd({k:'chest',t:performance.now(),cx:x*16+8,cy:y*16+8,id:r.s.id,col:R1.col,l:r.s.tier});r.promos.forEach((p,i)=>ovAdd({k:'promo',t:performance.now()+700+i*1300,id:p.s.id,col:RARITY[p.s.tier].col}));let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';
   r.promos.forEach(p=>{const R2=RARITY[p.s.tier];msg+='<br><span style="font-size:13px;color:#ffd24a">⬆ '+RARITY[p.from].star+'が'+NEED+'つそろった！ <span style="color:'+R2.col+'">'+R2.star+'</span> 「'+p.s.name+'」</span>'});
   toast(msg,r.promos.length?3600:2400);renderSkins();paintIcon();saveRun()}
 function paintIcon(){const c=$('#skinico').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,16,16);c.drawImage(skinFrame(SKIN,performance.now()),0,0)}
@@ -427,14 +441,15 @@ function buildIcons(){
   document.querySelectorAll('canvas.hi').forEach(c=>iconOn(c,16,16,HUD_ICON[c.dataset.i]));
   document.querySelectorAll('canvas.ai').forEach(c=>iconOn(c,18,18,ACT_ICON[c.dataset.i]));
   document.querySelectorAll('canvas.ar').forEach(c=>iconOn(c,16,16,()=>arrowIcon(+c.dataset.a)))}
-const OPT_SHORT={ctl:{swipe:'スワイプ',dpad:'十字'},tr:{'1':'軌跡あり','0':'軌跡なし'},cr:{'1':'ひび割れ','0':'割れ無し'},vw:{'0':'全体','3':'広い','2':'ふつう'}};
-const OPT_TITLE={ctl:'操作',tr:'軌跡',cr:'ひび割れの床',vw:'視界'};
+const OPT_SHORT={ctl:{swipe:'スワイプ',dpad:'十字'},tr:{'1':'軌跡あり','0':'軌跡なし'},cr:{'1':'ひび割れ','0':'割れ無し'},vw:{'0':'全体','3':'広い','2':'ふつう'},fx:{'2':'標準','1':'控えめ','0':'なし'}};
+const OPT_TITLE={ctl:'操作',tr:'軌跡',cr:'ひび割れの床',vw:'視界',fx:'演出'};
 function buildOpts(){
   const G=[
    ['ctl',[['swipe',c=>icoSwipe(c),'スワイプで操作'],['dpad',c=>icoDpad(c),'十字ボタンで操作']]],
    ['tr',[['1',c=>icoTrail(c,true),'滑った軌跡を表示'],['0',c=>icoTrail(c,false),'軌跡を表示しない']]],
    ['cr',[['1',c=>icoCrack(c,true),'ひび割れの床あり'],['0',c=>icoCrack(c,false),'ひび割れの床なし']]],
-   ['vw',[['0',c=>icoVision(c,9),'全体が見える'],['3',c=>icoVision(c,3),'視界 広い'],['2',c=>icoVision(c,2),'視界 ふつう']]]
+   ['vw',[['0',c=>icoVision(c,9),'全体が見える'],['3',c=>icoVision(c,3),'視界 広い'],['2',c=>icoVision(c,2),'視界 ふつう']]],
+   ['fx',[['2',c=>icoFx(c,2),'演出を標準'],['1',c=>icoFx(c,1),'演出を控えめ'],['0',c=>icoFx(c,0),'演出なし']]]
   ];
   const box=$('#opts');box.innerHTML='';
   G.forEach(([sel,opts])=>{const grp=document.createElement('div');grp.className='og';const gt=document.createElement('div');gt.className='gt';gt.textContent=OPT_TITLE[sel]||'';grp.appendChild(gt);const row=document.createElement('div');row.className='ogr';grp.appendChild(row);
@@ -450,7 +465,7 @@ function load(n,rows){
   fl=Math.max(1,n);curRows=rows||genLevel(fl);g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
-  if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();saveRun();prefetch(fl+1);if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1);
+  if(fl>best){if(fl>1)recFx();best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();saveRun();prefetch(fl+1);if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1);
 }
 let reqLen=0;
 function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F'}
@@ -463,14 +478,49 @@ function act(d){
   S.hist.push({x:S.x,y:S.y,holes:S.holes.slice(),moves:S.moves});
   anim={m,d,t0:performance.now(),n:m.trail.length-1,from:[S.x,S.y]};
 }
+
+/* ===== 演出（操作を止めずに画面の上に重ねる。タップで飛ばせる。設定で「標準／控えめ／なし」） ===== */
+let FXLV=+ST.get('ice_fx','2');if(![0,1,2].includes(FXLV))FXLV=2;
+let OV=[];
+const CFC=['#ff5a7a','#ffd24a','#5aa0ff','#7dffa0','#c77dff','#ffffff'];
+const _dk={};
+function darkSprite(id){if(_dk[id])return _dk[id];const c=document.createElement('canvas');c.width=16;c.height=16;const k=c.getContext('2d');k.drawImage(skinFrame(id,0),0,0);k.globalCompositeOperation='source-atop';k.fillStyle='#0a1a2a';k.fillRect(0,0,16,16);return _dk[id]=c}
+function mkConf(n,seed){const r=mkRng(seed);return Array.from({length:n},()=>({a:-Math.PI/2+(r()-.5)*2.6,v:30+r()*55,c:CFC[(r()*CFC.length)|0],s:r()<.5?2:1}))}
+function ovAdd(o){if(FXLV>0||o.k==='fade')OV.push(o)}
+function banner(txt,ms){if(FXLV===0)return;const e=$('#bn');e.textContent=txt;e.classList.add('on');clearTimeout(banner.t);banner.t=setTimeout(()=>e.classList.remove('on'),ms)}
+function skipFx(){if(OV.length||$('#bn').classList.contains('on')){OV.length=0;$('#bn').classList.remove('on');cv.style.transform=''}}
+function recFx(){if(FXLV===0)return;ovAdd({k:'rec',t:performance.now()+300});const e=$('#bs').parentElement;e.classList.remove('pulse');void e.offsetWidth;e.classList.add('pulse')}
+function PA(x0,y0,w,h,c,a){cx.globalAlpha=Math.max(0,Math.min(1,a));P(x0,y0,w,h,c);cx.globalAlpha=1}
+function ovRing(x0,y0,r,col,a){if(r<1||a<=0)return;cx.globalAlpha=Math.min(1,a);cx.fillStyle=col;for(let k=0;k<360;k+=Math.max(4,Math.round(360/(r*6)))){const t=k*Math.PI/180;cx.fillRect(Math.round(x0+r*Math.cos(t)),Math.round(y0+r*Math.sin(t)),1,1)}cx.globalAlpha=1}
+function pulseSkinBtn(){const b=$('#skinbtn');b.classList.remove('pulse2');void b.offsetWidth;b.classList.add('pulse2')}
+function glintPx(x0,y0,r,col){x0=Math.round(x0);y0=Math.round(y0);P(x0,y0,1,1,'#ffffff');if(r>=1){P(x0-1,y0,1,1,col);P(x0+1,y0,1,1,col);P(x0,y0-1,1,1,col);P(x0,y0+1,1,1,col)}}
+function ovSprite(img,x0,y0,sc,a){cx.save();cx.globalAlpha=Math.max(0,Math.min(1,a==null?1:a));cx.translate(Math.round(x0),Math.round(y0));cx.scale(sc,sc);cx.drawImage(img,-8,-8);cx.restore()}
+const easeS=u=>u<0?0:u>1?1:u*u*(3-2*u);
+function drawOV(now){
+  const fo=OV.find(o=>o.k==='fall');cv.style.transform=(fo&&now-fo.t>=0&&now-fo.t<350)?'translate('+((Math.random()-.5)*6).toFixed(1)+'px,'+((Math.random()-.5)*6).toFixed(1)+'px)':'';
+  const LIFE={win:900,chest:2100,fall:700,fade:100,promo:1300,rec:900};
+  OV=OV.filter(o=>now-o.t<(LIFE[o.k]||600));
+  for(const o of OV){const u=now-o.t;if(u<0)continue;
+    if(o.k==='win'){ovRing(o.cx,o.cy,u/6,'#ffe680',1-u/500);ovRing(o.cx,o.cy,u/10,'#ffffff',1-u/420);const f=u>700?1-(u-700)/200:1;o.conf.forEach(p=>{const q=u/1000;PA(o.cx+Math.cos(p.a)*p.v*q,o.cy-4+Math.sin(p.a)*p.v*q+70*q*q,p.s,p.s,p.c,f)})}
+    else if(o.k==='fade'){PA(0,0,W,H,'#0e2236',1-u/100)}
+    else if(o.k==='fall'){PA(0,0,W,H,'#000000',u<450?Math.min(.55,u/350*.55):.55*(1-(u-450)/250))}
+    else if(o.k==='chest'){const dir=o.cx>56?-1:1;
+      if(u>=250&&u<1500){const e=Math.min(1,(u-250)/700),px=o.cx+dir*30*e,land=u>=950,py=land?o.cy+2:o.cy-6-30*Math.sin(Math.PI*e);ovSprite(skinFrame(o.id,now),px,Math.max(8,py),land?1.1:1,1);
+        if(land&&u<1250){ovRing(px,o.cy+8,(u-950)/14,o.col,1-(u-950)/300);if(FXLV>1)for(let k=0;k<4+o.l*2;k++)glintPx(px-10+k*6,o.cy-2-((u-950)/12)%12,1,o.col)}}
+      if(u>=1500){const e=easeS((u-1500)/450),sx=o.cx+dir*30,sy=o.cy+2;ovSprite(skinFrame(o.id,now),sx+(100-sx)*e,sy+(14-sy)*e,1.1-.65*e,1);if(u>=1950&&!o.pz){o.pz=1;pulseSkinBtn()}}}
+    else if(o.k==='promo'){const sc=.2+1.6*easeS(Math.min(1,u/500));if(u<150)PA(0,0,W,H,'#ffffff',.7*(1-u/150));ovRing(56,56,u/8,o.col,1-u/600);ovSprite(skinFrame(o.id,now),56,56,sc,u>1000?1-(u-1000)/300:1);for(let k=0;k<10;k++){const a=k*Math.PI/5,r=u*.05;if(r<40)glintPx(56+Math.cos(a)*r,56+Math.sin(a)*r,1,o.col)}}
+    else if(o.k==='rec'){const w=Math.max(0,Math.sin(Math.min(1,u/600)*Math.PI)),sc=2+w*1.2,a=u>700?1-(u-700)/200:1;cx.save();cx.globalAlpha=Math.max(0,a);cx.translate(56-8*sc,24-8*sc);cx.scale(sc,sc);HUD_ICON.crown();cx.restore();cx.globalAlpha=1;for(let k=0;k<6;k++){const v=(u/700+k*.17)%1;glintPx(56+Math.cos(k*1.3)*30*v,24+Math.sin(k*1.3)*20*v,v<.5?1:0,'#ffb300')}}
+  }}
+function icoFx(c,l){if(l===2){P(8,2,2,14,'#ffd24a');P(2,8,14,2,'#ffd24a');P(5,5,2,2,'#ffffff');P(11,11,2,2,'#ffffff');P(11,4,2,2,'#ffd24a');P(4,11,2,2,'#ffd24a')}else if(l===1){P(8,6,2,6,'#9bbbd6');P(6,8,6,2,'#9bbbd6')}else{P(3,3,12,12,'#27507a');for(let k=0;k<14;k++)P(2+k,15-k,2,1,'#e0443c')}}
 function finish(){
   const m=anim.m;S.x=m.x;S.y=m.y;S.holes=m.holes;S.moves++;if(m.hit&&m.res==='ok')openChest(m.hit[0],m.hit[1]);
   if(m.res==='ok'){anim=null;draw_hud();return}
   anim.done=m.res;anim.t1=performance.now();draw_hud();
-  if(m.res==='win'){toast('✨ クリア！ <span style="color:#ffd24a">'+(fl+1)+'F</span> へ上がる',1300);
-    setTimeout(()=>load(fl+1),1400)}
-  else{fall++;const dn=Math.max(1,fl-1);toast('🕳 穴に落ちた…<br>'+(fl>1?'<span style="color:#ffd24a">'+dn+'F</span> に落下':'1Fからやり直し'),1400);
-    setTimeout(()=>{load(dn)},1500)}
+  if(m.res==='win'){const nf=fl+1;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?40:14,7)});banner('↑ '+nf+'F',900);
+    // 次の階へはすぐ切り替える（約0.18秒）。演出は新しい階の上に重ねて続き、操作は止めない
+    setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});load(nf)},FXLV>0?180:40)}
+  else{fall++;const dn=Math.max(1,fl-1);ovAdd({k:'fall',t:anim.t1});banner('↓ '+dn+'F',800);
+    setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});load(dn)},FXLV>0?450:120)}
 }
 $('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
 $('#reset').onclick=()=>{if(!anim)load(fl,curRows)};
@@ -480,7 +530,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261102-1932';
+const BUILD='20261102-1943';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -499,11 +549,12 @@ function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
 function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
 $('#vw').onchange=setView;
+$('#fx').value=String(FXLV);$('#fx').onchange=()=>{FXLV=+$('#fx').value;ST.set('ice_fx',FXLV);OV.length=0;$('#bn').classList.remove('on')};
 $('#cr').onchange=()=>{if(anim)return;NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl)};
 document.querySelectorAll('#dp button').forEach(b=>b.onclick=()=>act(+b.dataset.d));
 addEventListener('keydown',e=>{const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(k!=null){e.preventDefault();act(k)}});
 let p0=null;
-cv.addEventListener('pointerdown',e=>{p0=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointerdown',e=>{skipFx();p0=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId)});
 cv.addEventListener('pointerup',e=>{if(!p0)return;if($('#ctl').value!=='swipe'){p0=null;return}
   const dx=e.clientX-p0[0],dy=e.clientY-p0[1];p0=null;if(Math.max(Math.abs(dx),Math.abs(dy))<22)return;
   act(Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0))});
@@ -516,7 +567,7 @@ function frame(now){
     const a=anim.m.trail[i],b=anim.m.trail[Math.min(i+1,anim.n)];pxp=a[0]+(b[0]-a[0])*f;pyp=a[1]+(b[1]-a[1])*f;sparkle=!anim.done;
     vis=S.holes.slice();for(let k=0;k<Math.floor(prog+0.0001);k++){const [tx,ty]=anim.m.trail[k];if(g[ty][tx]==='c'&&!vis.includes(ty*C+tx))vis.push(ty*C+tx)}
     if(prog>=anim.n&&!anim.fin){anim.fin=1;finish()}}
-  if(anim&&anim.done){const t=Math.min(1,(now-anim.t1)/600);if(anim.done==='fall'){scale=Math.max(.1,1-t*.9);alpha=1-t*.6}else{scale=1+Math.sin(t*3.14)*.25}}
+  if(anim&&anim.done){const t=Math.min(1,(now-anim.t1)/(anim.done==='fall'?350:180));if(anim.done==='fall'){scale=Math.max(.1,1-t*.9);alpha=1-t*.6}else{scale=1+Math.sin(t*3.14)*.25}}
   for(let y=0;y<R;y++)for(let x=0;x<C;x++){const ch=g[y][x];tile(ch,x,y,(ch==='c'&&vis.includes(y*C+x))?'hole':null)}
   if(VIEW>0){for(let y=0;y<R;y++)for(let x=0;x<C;x++){const dx=Math.abs(x-pxp),dy=Math.abs(y-pyp);const d=Math.max(dx,dy);if(d>VIEW+0.01)P(x*T,y*T,T,T,'#050d16')}}
   // 軌跡（白い1ドットの線）
@@ -541,6 +592,7 @@ function frame(now){
       P(gx,gy,1,1,'#ffffff');if(u>=0.15&&u<0.85){P(gx-1,gy,1,1,'#ffb300');P(gx+1,gy,1,1,'#ffb300');P(gx,gy-1,1,1,'#ffb300');P(gx,gy+1,1,1,'#ffb300')}
       if(u>=0.3&&u<0.7){P(gx-2,gy,1,1,'#ffcf40');P(gx+2,gy,1,1,'#ffcf40');P(gx,gy-2,1,1,'#ffcf40');P(gx,gy+2,1,1,'#ffcf40')}}}
 
+  drawOV(now);
   if(skinAnimated(SKIN)&&Math.floor(now/90)!==frame.rb){frame.rb=Math.floor(now/90);paintIcon()}
   requestAnimationFrame(frame);
 }
