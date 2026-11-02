@@ -36,6 +36,13 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .sk.cur{border-color:var(--ac);background:#22476b}
 .sk.lock{cursor:default;color:var(--mu)}
 .sk em{font-style:normal;font-size:9.5px;color:var(--mu);line-height:1.3;text-align:center}
+
+.row{display:none}
+.opts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.og{background:var(--card);border-radius:8px;padding:5px;display:flex;gap:4px}
+.opt{background:#0f2a44;border:2px solid #27507a;border-radius:6px;padding:2px;width:46px;height:46px;cursor:pointer;flex:none}
+.opt canvas{width:100%;height:100%;border:0;background:none;border-radius:0;display:block}
+.opt.cur{border-color:var(--ac);background:#22476b}
 </style></head><body>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
@@ -43,10 +50,10 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0">▲</button><span></span><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button></div>
 <div class="btns"><button id="undo">↩ 1手戻す</button><button id="reset">🔄 この階を最初から</button><button id="hint">💡 次の一手</button></div>
-<div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option><option value="1">狭い（3×3）</option></select></label><label>視界の形 <select id="vs"><option value="sq">四角（周囲すべて）</option><option value="dm">ひし形（縦横の合計）</option></select></label></div>
+<div class="opts" id="opts"></div><div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。視界が「ふつう」「狭い」のときは、10階より上でたまに宝箱が出る。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。5階・10階・15階…と5の倍数の階に着くたびに、階段までの必要な操作回数が1回増える。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5・狭い3×3）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。視界が「広い」「ふつう」のときは、10階より上でたまに宝箱が出る。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（階が上がるほど珍しいスキンが出る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。5階・10階・15階…と5の倍数の階に着くたびに、階段までの必要な操作回数が1回増える。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -55,7 +62,7 @@ const ST={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(
 let fl=1,g,sx,sy,S,fall=0,best=+ST.get('ice_best','1'),anim=null,hintDir=-1,hintT=0,fx=[];
 $('#ctl').value=ST.get('ice_ctl','swipe');$('#tr').value=ST.get('ice_tr','1');
 let NOCR=ST.get('ice_cr','1')==='0';$('#cr').value=NOCR?'0':'1';
-let VIEW=Math.min(3,+ST.get('ice_vw','0')),VSH=ST.get('ice_vs','sq');$('#vw').value=String(VIEW);$('#vs').value=VSH;
+let VIEW=(v=>v===1?2:Math.min(3,v))(+ST.get('ice_vw','0')),VSH='sq';$('#vw').value=String(VIEW);
 function bestKey(){return 'ice_best'+(VIEW?'_v'+VIEW+VSH:'')+(NOCR?'_nc':'')}
 best=+ST.get(bestKey(),'1');
 
@@ -235,7 +242,7 @@ let curRows=null;
 /* ===== 宝箱（視界が「ふつう」「狭い」のときだけ。10階より上で出る） ===== */
 const CHEST_MIN=10,CHEST_RATE=0.3;
 function inB(x,y){return x>=0&&y>=0&&x<C&&y<R}
-function chestPossible(floor){return(VIEW===1||VIEW===2)&&floor>=CHEST_MIN&&SKINS.some(k=>k.tier>0&&TIERFLOOR[k.tier]<=floor&&!OWNED.includes(k.id))}
+function chestPossible(floor){return(VIEW===3||VIEW===2)&&floor>=CHEST_MIN&&SKINS.some(k=>k.tier>0&&TIERFLOOR[k.tier]<=floor&&!OWNED.includes(k.id))}
 function bumpableRocks(rows){const gg=rows.map(r=>r.split(''));let x0=0,y0=0;gg.forEach((r,y)=>r.forEach((c,x)=>{if(c==='S'){x0=x;y0=y}}));
   const seen=new Set(),hits=new Set(),st=[[x0,y0,[]]];let n=0;
   while(st.length&&n++<4000){const [x,y,h]=st.pop();const k=x+','+y+','+h.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);
@@ -261,6 +268,29 @@ function renderSkins(){const el=$('#skinpanel');el.innerHTML='<div class="skh">�
     b.appendChild(c);const l=document.createElement('span');l.textContent=own?s.name:'？？？';b.appendChild(l);
     if(!own){const h=document.createElement('em');h.textContent=TIERFLOOR[s.tier]+'階〜の宝箱';b.appendChild(h)}
     b.onclick=()=>{if(!own)return;SKIN=s.id;ST.set('ice_skin',SKIN);renderSkins();paintIcon()};gr.appendChild(b)})}
+
+/* ===== 設定は絵のボタンで選ぶ（文字でなく見た目で分かるように） ===== */
+function setIco(c){c.imageSmoothingEnabled=false}
+function icoSwipe(c){P(3,11,9,2,'#eaf6ff');P(12,9,1,6,'#eaf6ff');P(13,10,1,4,'#eaf6ff');P(14,11,1,2,'#eaf6ff');P(2,10,4,4,'#ffd24a');P(3,9,2,1,'#ffd24a');P(2,10,4,1,'#fff0a0')}
+function icoDpad(c){P(7,2,4,14,'#9bbbd6');P(2,7,14,4,'#9bbbd6');P(8,8,2,2,'#27507a');P(8,3,2,1,'#0f2a44');P(8,14,2,1,'#0f2a44');P(3,8,1,2,'#0f2a44');P(14,8,1,2,'#0f2a44')}
+function icoTrail(c,on){if(on){P(2,8,10,2,'rgba(255,255,255,.35)');P(5,8,7,2,'rgba(255,255,255,.65)');P(8,8,4,2,'#fff')}P(12,6,5,6,'#2f4a86');P(13,7,3,3,'#f4f8ff');P(14,8,1,1,'#ffa21f')}
+function icoCrack(c,on){cx=c;if(on){FL['c'](1,1)}else{FL['.'](1,1);for(let i=0;i<14;i++)P(2+i,15-i,2,1,'#e0443c')}cx=MAIN}
+function icoVision(c,r){for(let y=0;y<9;y++)for(let x=0;x<9;x++){const lit=r>=4||(Math.abs(x-4)<=r&&Math.abs(y-4)<=r);P(x*2,y*2,2,2,lit?'#c9f0fb':'#0a1a2a');if(lit&&(x+y)%2===0)P(x*2,y*2,2,2,'#bfe8f6')}P(8,8,2,2,'#2f4a86');P(8,8,1,1,'#f4f8ff')}
+function buildOpts(){
+  const G=[
+   ['ctl',[['swipe',c=>icoSwipe(c),'スワイプで操作'],['dpad',c=>icoDpad(c),'十字ボタンで操作']]],
+   ['tr',[['1',c=>icoTrail(c,true),'滑った軌跡を表示'],['0',c=>icoTrail(c,false),'軌跡を表示しない']]],
+   ['cr',[['1',c=>icoCrack(c,true),'ひび割れの床あり'],['0',c=>icoCrack(c,false),'ひび割れの床なし']]],
+   ['vw',[['0',c=>icoVision(c,9),'全体が見える'],['3',c=>icoVision(c,3),'視界 広い'],['2',c=>icoVision(c,2),'視界 ふつう']]]
+  ];
+  const box=$('#opts');box.innerHTML='';
+  G.forEach(([sel,opts])=>{const grp=document.createElement('div');grp.className='og';
+    opts.forEach(([v,draw,name])=>{const b=document.createElement('button');b.type='button';b.className='opt';b.dataset.sel=sel;b.dataset.v=v;b.title=name;b.setAttribute('aria-label',name);
+      const c=document.createElement('canvas');c.width=18;c.height=18;const x=c.getContext('2d');setIco(x);cx=x;draw(x);cx=MAIN;b.appendChild(c);
+      b.onclick=()=>{if(anim)return;const s=$('#'+sel);s.value=v;s.dispatchEvent(new Event('change'));syncOpts()};grp.appendChild(b)});
+    box.appendChild(grp)});
+  syncOpts()}
+function syncOpts(){document.querySelectorAll('#opts .opt').forEach(b=>b.classList.toggle('cur',$('#'+b.dataset.sel).value===b.dataset.v))}
 $('#skinbtn').onclick=()=>{const p=$('#skinpanel');p.hidden=!p.hidden;if(!p.hidden)renderSkins()};
 
 function load(n,rows){
@@ -294,8 +324,8 @@ $('#reset').onclick=()=>{if(!anim)load(fl,curRows)};
 $('#hint').onclick=()=>{if(anim)return;const d=findSol(S.x,S.y,S.holes);if(d===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=d;hintT=performance.now()};
 function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList.toggle('on',v==='dpad')}
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
-function setView(){VIEW=+$('#vw').value;VSH=$('#vs').value;ST.set('ice_vw',VIEW);ST.set('ice_vs',VSH);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
-$('#vw').onchange=$('#vs').onchange=setView;
+function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
+$('#vw').onchange=setView;
 $('#cr').onchange=()=>{if(anim)return;NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl)};
 document.querySelectorAll('#dp button').forEach(b=>b.onclick=()=>act(+b.dataset.d));
 addEventListener('keydown',e=>{const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(k!=null){e.preventDefault();act(k)}});
@@ -315,7 +345,7 @@ function frame(now){
     if(prog>=anim.n&&!anim.fin){anim.fin=1;finish()}}
   if(anim&&anim.done){const t=Math.min(1,(now-anim.t1)/600);if(anim.done==='fall'){scale=Math.max(.1,1-t*.9);alpha=1-t*.6}else{scale=1+Math.sin(t*3.14)*.25}}
   for(let y=0;y<R;y++)for(let x=0;x<C;x++){const ch=g[y][x];tile(ch,x,y,(ch==='c'&&vis.includes(y*C+x))?'hole':null)}
-  if(VIEW>0){for(let y=0;y<R;y++)for(let x=0;x<C;x++){const dx=Math.abs(x-pxp),dy=Math.abs(y-pyp);const d=VSH==='dm'?dx+dy:Math.max(dx,dy);if(d>VIEW+0.01)P(x*T,y*T,T,T,'#050d16')}}
+  if(VIEW>0){for(let y=0;y<R;y++)for(let x=0;x<C;x++){const dx=Math.abs(x-pxp),dy=Math.abs(y-pyp);const d=Math.max(dx,dy);if(d>VIEW+0.01)P(x*T,y*T,T,T,'#050d16')}}
   // 軌跡（白い1ドットの線）
   if($('#tr').value==='1'&&anim&&!anim.done){const x0=Math.round(anim.from[0]*T+8),y0=Math.round(anim.from[1]*T+8),x1=Math.round(pxp*T+8),y1=Math.round(pyp*T+8);
     P(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0)+1,Math.abs(y1-y0)+1,'rgba(255,255,255,.85)')}
@@ -339,6 +369,6 @@ function frame(now){
 (function(){const items=[['.','氷（止まれない）'],['s','石の床（止まる）'],['c','ひび割れ（通ると穴）'],['hole','穴（落ちる）'],['o','障害物（氷の塊）'],['G','階段（上の階へ）']];
   $('#leg').innerHTML=items.map(it=>`<span><canvas width="16" height="16" data-k="${it[0]}"></canvas>${it[1]}</span>`).join('');
   document.querySelectorAll('#leg canvas').forEach(c=>{cx=c.getContext('2d');cx.imageSmoothingEnabled=false;tile(c.dataset.k,0,0)});cx=MAIN})();
-paintIcon();renderSkins();load(1);requestAnimationFrame(frame);
+buildOpts();paintIcon();renderSkins();load(1);requestAnimationFrame(frame);
 </script>
 </body></html>
