@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<title>氷の塔</title>
+<style>
+:root{color-scheme:dark;--bg:#0e2236;--card:#1b3c5c;--ac:#ffd24a;--tx:#eaf6ff;--mu:#9bbbd6}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0 auto;background:var(--bg);color:var(--tx);font-family:system-ui,"Yu Gothic",sans-serif;font-size:14px;max-width:480px;padding-block:10px 30px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+h1{font-size:18px;margin:4px 0 2px}.sub{color:var(--mu);font-size:12px;margin-bottom:8px;line-height:1.6}
+.bar{display:flex;gap:6px;margin-bottom:8px}.bar div{flex:1;background:var(--card);border-radius:6px;padding:6px 2px;text-align:center;font-size:11px;color:var(--mu)}.bar b{display:block;font-size:17px;color:var(--tx)}
+.bar .fl b{font-size:22px;color:var(--ac)}
+.wrap{position:relative}
+canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid #27507a;border-radius:4px}
+#toast{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);background:rgba(10,26,42,.94);border:3px solid var(--ac);padding:12px 18px;font-size:15px;font-weight:700;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
+#toast.on{opacity:1}
+.btns{display:flex;gap:6px;margin-top:8px}.btns button{flex:1;background:var(--card);color:var(--tx);border:0;border-radius:6px;padding:11px 4px;font-size:13px;font-family:inherit}
+.btns button:active{background:#2a5580}
+.dpad{display:none;margin:10px auto 0;width:180px;grid-template-columns:repeat(3,1fr);gap:6px}
+.dpad.on{display:grid}.dpad button{background:var(--card);color:var(--tx);border:0;border-radius:6px;height:52px;font-size:22px}.dpad button:active{background:#2a5580}
+.row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.row label{background:var(--card);border-radius:6px;padding:8px 10px;font-size:12px}
+.fchips{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.fchips button{background:var(--card);color:var(--mu);border:0;border-radius:4px;padding:6px 0;width:calc((100% - 36px)/10);font-size:11px}
+.fchips button.cur{background:var(--ac);color:#10243a;font-weight:700}
+.leg{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--mu);margin-top:10px;line-height:1.9}
+.leg canvas{width:20px;height:20px;border:0;display:inline-block;vertical-align:-6px;margin-right:3px;background:none}
+.note{margin-top:12px;font-size:11px;color:var(--mu);line-height:1.7;background:var(--card);border-radius:6px;padding:8px 10px}
+</style></head><body>
+<h1>🧊 氷の塔</h1>
+<div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
+<div class="bar"><div class="fl">階<b id="fl">1F</b></div><div>手数<b id="mv">0</b></div><div>落下<b id="fa">0</b></div><div>最高到達<b id="bs">1F</b></div></div>
+<div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div></div>
+<div class="dpad" id="dp"><span></span><button data-d="0">▲</button><span></span><button data-d="3">◀</button><button data-d="2">▼</button><button data-d="1">▶</button></div>
+<div class="btns"><button id="undo">↩ 1手戻す</button><button id="reset">🔄 この階を最初から</button><button id="hint">💡 次の一手</button></div>
+<div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option><option value="1">狭い（3×3）</option></select></label><label>視界の形 <select id="vs"><option value="sq">四角（周囲すべて）</option><option value="dm">ひし形（縦横の合計）</option></select></label></div>
+<div class="fchips" id="fc" hidden></div>
+<div class="leg" id="leg"></div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。階は毎回ランダムで、階段までの進み方は1通りだけ。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5・狭い3×3）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
+<script>
+const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
+const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
+const $=s=>document.querySelector(s);const cv=$('#cv');let cx=cv.getContext('2d');const MAIN=cx;cx.imageSmoothingEnabled=false;
+const ST={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let fl=1,g,sx,sy,S,fall=0,best=+ST.get('ice_best','1'),anim=null,hintDir=-1,hintT=0,fx=[];
+$('#ctl').value=ST.get('ice_ctl','swipe');$('#tr').value=ST.get('ice_tr','1');
+let NOCR=ST.get('ice_cr','1')==='0';$('#cr').value=NOCR?'0':'1';
+let VIEW=Math.min(3,+ST.get('ice_vw','0')),VSH=ST.get('ice_vs','sq');$('#vw').value=String(VIEW);$('#vs').value=VSH;
+function bestKey(){return 'ice_best'+(VIEW?'_v'+VIEW+VSH:'')+(NOCR?'_nc':'')}
+best=+ST.get(bestKey(),'1');
+
+/* ===== ドット絵 ===== */
+function sprite(rows,pal){const c=document.createElement('canvas');c.width=T;c.height=T;const x=c.getContext('2d');
+  rows.forEach((r,y)=>{for(let i=0;i<r.length;i++){const k=r[i];if(k!=='.'){x.fillStyle=pal[k];x.fillRect(i,y,1,1)}}});return c}
+const PENGUIN=sprite([
+"................",
+"......KKKK......",
+"....KKBBBBKK....",
+"...KBBBBBBBBK...",
+"...KBWWBBWWBK...",
+"...KBWKBBWKBK...",
+"...KBBBOOBBBK...",
+"..KBBBBOOBBBBK..",
+"..KBWWWWWWWWBK..",
+"..KBWWWWWWWWBK..",
+"..KBWWWWWWWWBK..",
+"..KBBWWWWWWBBK..",
+"...KBBWWWWBBK...",
+"....KKBBBBKK....",
+"...OOOKKKKOOO...",
+"..OOOO......OOOO"],{K:'#14142b',B:'#2f4a86',W:'#f4f8ff',O:'#ffa21f'});
+const ROCK=sprite([
+"................",
+"................",
+"......KKKK......",
+"....KKHHLLKK....",
+"...KHHHLLLLLK...",
+"..KHHLLLLLLGKKK.",
+"..KHLLLLLLGGKLLK",
+".KHLLLLLGGGKLGGK",
+".KLLLLLGGGGDKGDK",
+".KLLLLGGGGGDKGDK",
+".KLLGGGGGGGDDDDK",
+".KGGGGGGGGGDDDDK",
+".KGGGGGGGGDDDDDK",
+"..KKGGGGDDDDKK..",
+"....KKKKKKKK....",
+"................"],{K:'#1c4468',H:'#f2fdff',L:'#9eeaf8',G:'#63cde8',D:'#3497bd'});
+const HOLE=sprite([
+"................",
+".....KKKKKK.....",
+"...KKddddddKK...",
+"..KddxxxxxxddK..",
+"..Kdxxxxxxxxdk..",
+".KdxxxxxxxxxxdK.",
+".Kdxxxxxxxxxxdk.",
+".Kdxxxxxxxxxxdk.",
+".Kdxxxxxxxxxxdk.",
+".KdxxxxxxxxxxdK.",
+"..Kdxxxxxxxxdk..",
+"..KddxxxxxxddK..",
+"...KKddddddKK...",
+".....KKKKKK.....",
+"................",
+"................"],{K:'#0a1a2a',d:'#4a6f8c',x:'#02060b',k:'#0a1a2a'});
+// 穴の背景は暗い氷の下。床いっぱいに黒を敷いてから描く
+function P(x,y,w,h,c){cx.fillStyle=c;cx.fillRect(x,y,w,h)}
+function iceBase(X,Y){P(X,Y,T,T,'#c9f0fb');P(X,Y+T-1,T,1,'#8fcbe3');P(X+T-1,Y,1,T,'#8fcbe3');P(X,Y,T,1,'#e8fbff');P(X,Y,1,T,'#e8fbff');}
+const STAIR=[".. KKK".replace(" ",""),".KTTTK..........",".KTTMKKK........",".KTMTKMMK.......",".KMTMKMMKKK.....",".KTMMKMDKDDK....",".KMMMKMDKDDKKK..",".KBBBKMMKDDKDDK.",".KBBBKMDKDDKDDK.",".KBBBBBBKDDKDDK.",".KBBBBBBKDDKDDK.",".KBBBBBBBBBKDDK.",".KBBBBBBBBBKDDK.",".KBBBBBBBBBBBBK.","..KKKKKKKKKKKK..","................"];
+STAIR[0]="..KKK...........";
+const STAIRPAL={K:'#1c4468',T:'#9eeaf8',B:'#63cde8',M:'#4bb0d4',D:'#3497bd'};
+const FL={
+ '.':(X,Y)=>{iceBase(X,Y);P(X+3,Y+10,1,1,'#fff');P(X+4,Y+9,1,1,'#fff');P(X+5,Y+8,1,1,'#fff');P(X+10,Y+4,1,1,'#fff');P(X+11,Y+3,1,1,'#fff');P(X+8,Y+11,2,1,'#aee3f3');P(X+2,Y+4,2,1,'#aee3f3')},
+ 's':(X,Y)=>{P(X,Y,T,T,'#9fc0d6');P(X,Y+T-1,T,1,'#6d93ad');P(X+T-1,Y,1,T,'#6d93ad');P(X,Y,T,1,'#9fc0d6');P(X,Y,1,T,'#9fc0d6');
+   [[3,3],[9,5],[12,11],[5,10],[7,13],[13,2]].forEach(a=>P(X+a[0],Y+a[1],2,1,'#86a9c0'));[[6,3],[2,12],[11,8]].forEach(a=>P(X+a[0],Y+a[1],1,1,'#b9d3e4'))},
+ 'c':(X,Y)=>{P(X,Y,T,T,'#9fc0d6');P(X,Y+T-1,T,1,'#6d93ad');P(X+T-1,Y,1,T,'#6d93ad');
+   const k='#274560';[[2,2],[3,3],[4,4],[5,5],[5,6],[6,7],[7,8],[7,9],[8,10],[9,11],[10,12],[10,13],[11,14],[5,7],[4,8],[3,9],[8,6],[9,5],[10,4],[11,3],[9,9],[10,9],[11,10],[12,10]].forEach(a=>P(X+a[0],Y+a[1],1,1,k));
+   [[0,0],[2,0],[4,0],[12,0],[14,0],[0,14],[14,14],[0,2],[0,12],[15,2],[15,6]].forEach(a=>P(X+a[0],Y+a[1],1,1,'#eaf8ff'))},
+ 'h':(X,Y)=>FL.hole(X,Y),
+ 'hole':(X,Y)=>{FL.c(X,Y);const SP=[null,null,null,[7,9],[5,10],[4,11],[3,11],[4,12],[3,11],[4,11],[5,10],[6,9],[7,8],null,null,null];
+   SP.forEach((q,r)=>{if(q)P(X+q[0],Y+r,q[1]-q[0]+1,1,'#02060b')});
+   SP.forEach((q,r)=>{if(!q)return;P(X+q[0]-1,Y+r,1,1,'#e8fbff');P(X+q[1]+1,Y+r,1,1,'#4a6f8c');
+     for(let x=q[0];x<=q[1];x++){const u=SP[r-1],d=SP[r+1];if(!u||x<u[0]||x>u[1])P(X+x,Y+r-1,1,1,'#e8fbff');if(!d||x<d[0]||x>d[1])P(X+x,Y+r+1,1,1,'#4a6f8c')}})},
+ '#':(X,Y)=>{P(X,Y,T,T,'#1a3049');for(let r=0;r<4;r++){const off=(r%2)?4:0;for(let c=-1;c<3;c++){const bx=X+c*8+off,by=Y+r*4;const x0=Math.max(bx,X),x1=Math.min(bx+7,X+T-1);
+     if(x1>=x0){P(x0,by,x1-x0+1,3,'#2c4d72');P(x0,by,x1-x0+1,1,'#3d6794')}}}},
+ 'o':(X,Y)=>{iceBase(X,Y);P(X+3,Y+14,10,1,'rgba(0,0,0,.2)');cx.drawImage(ROCK,X,Y)},
+ 'G':(X,Y)=>{iceBase(X,Y);STAIR.forEach((r,y)=>{for(let x=0;x<16;x++){const k=r[x];if(k!=='.')P(X+x,Y+y,1,1,STAIRPAL[k])}})},
+};
+FL['S']=(X,Y)=>FL['s'](X,Y); // 開始マスは専用の絵なし（石の床と同じ）
+function tile(ch,x,y,mode){(FL[mode||ch]||FL['.'])(x*T,y*T)}
+
+/* ===== ルール ===== */
+function move(g,holes,x,y,d){
+  let cx_=x,cy=y,steps=0,nh=holes.slice();const trail=[[x,y]];
+  for(;;){
+    const nx=cx_+D[d][0],ny=cy+D[d][1];
+    if(nx<0||ny<0||nx>=C||ny>=R)break;
+    const ch=g[ny][nx];if(ch==='#'||ch==='o')break;
+    if(g[cy][cx_]==='c'&&!nh.includes(cy*C+cx_))nh.push(cy*C+cx_);
+    cx_=nx;cy=ny;steps++;trail.push([cx_,cy]);
+    if(ch==='h'||nh.includes(cy*C+cx_))return{res:'fall',x:cx_,y:cy,holes:nh,trail};
+    if(ch==='G')return{res:'win',x:cx_,y:cy,holes:nh,trail};
+    if(ch==='s'||ch==='S')break;
+  }
+  return steps?{res:'ok',x:cx_,y:cy,holes:nh,trail}:null;
+}
+function findSol(x,y,holes){
+  const seen=new Set();let ans=null;
+  (function dfs(x,y,holes,first){
+    if(ans!==null)return;const k=x+','+y+','+holes.slice().sort().join('.');if(seen.has(k))return;seen.add(k);
+    for(let d=0;d<4&&ans===null;d++){const m=move(g,holes,x,y,d);if(!m||m.res==='fall')continue;
+      if(m.res==='win'){ans=first<0?d:first;return}dfs(m.x,m.y,m.holes,first<0?d:first)}
+    seen.delete(k);
+  })(x,y,holes,-1);
+  return ans;
+}
+/* ===== ランダム生成（各階とも「ゴールへの進み方が1通りだけ」になるまで作り直す） ===== */
+function mkRng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function solveCount(g,sx,sy){let count=0,best=null,nodes=0;const seen=new Set();
+  (function dfs(x,y,holes,path){if(count>1||nodes++>6000)return;const key=x+','+y+','+holes.slice().sort().join('.');if(seen.has(key))return;seen.add(key);
+    for(let d=0;d<4;d++){const m=move(g,holes,x,y,d);if(!m||m.res==='fall')continue;if(m.res==='win'){count++;if(!best)best=path.concat(d);continue}dfs(m.x,m.y,m.holes,path.concat(d))}
+    seen.delete(key)})(sx,sy,[],[]);
+  return{count,best,nodes}}
+function crackUsed(g,sx,sy,path){let x=sx,y=sy,holes=[],u=0;for(const d of path){const m=move(g,holes,x,y,d);for(const [tx,ty] of m.trail)if(g[ty][tx]==='c')u++;x=m.x;y=m.y;holes=m.holes}return u}
+function genOne(floor,seed){const r=mkRng(seed);const rockP=0.2+Math.min(floor,10)*0.004,stoneP=0.09;
+  const crackN=(NOCR||floor<2)?0:Math.min(2+Math.floor((floor-2)/2),7);
+  const g=[];for(let y=0;y<R;y++){g.push([]);for(let x=0;x<C;x++){const v=r();g[y].push(v<rockP?'o':v<rockP+stoneP?'s':'.')}}
+  const free=()=>{for(let i=0;i<500;i++){const x=Math.floor(r()*C),y=Math.floor(r()*R);if(g[y][x]==='.'||g[y][x]==='s')return[x,y]}return[0,0]};
+  const [sx,sy]=free();g[sy][sx]='S';const [gx,gy]=free();g[gy][gx]='G';
+  for(let i=0;i<crackN;i++){const [x,y]=free();if(g[y][x]==='.')g[y][x]='c'}
+  return{g,sx,sy}}
+function genLevel(floor){const f=Math.min(floor,10);const minLen=Math.min(3+Math.floor(f/2)+(f>1?1:0),8);const t0=performance.now();
+  while(performance.now()-t0<4000){const L=genOne(f,(Math.random()*4294967296)>>>0);const s=solveCount(L.g,L.sx,L.sy);
+    if(s.count!==1||s.nodes>=6000||s.best.length<minLen)continue;if(f>=2&&!NOCR&&crackUsed(L.g,L.sx,L.sy,s.best)<1)continue;
+    return L.g.map(r=>r.join(''))}
+  if(NOCR){const t1=performance.now();while(performance.now()-t1<4000){const L=genOne(f,(Math.random()*4294967296)>>>0);const s=solveCount(L.g,L.sx,L.sy);
+    if(s.count===1&&s.nodes<6000&&s.best.length>=3)return L.g.map(r=>r.join(''))}}
+  return LEVELS[f-1].rows} // 時間切れの保険: 作り置きの階
+let curRows=null;
+function load(n,rows){
+  fl=Math.max(1,n);curRows=rows||genLevel(fl);g=curRows.map(r=>r.split(''));
+  for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
+  S={x:sx,y:sy,holes:[],moves:0,hist:[]};anim=null;hintDir=-1;fx=[];
+  if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();
+}
+function draw_hud(){$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F'}
+function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
+function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
+function act(d){
+  if(anim)return;hintDir=-1;
+  const m=move(g,S.holes,S.x,S.y,d);
+  if(!m){fx.push({k:'bump',d,t:performance.now()});return}
+  S.hist.push({x:S.x,y:S.y,holes:S.holes.slice(),moves:S.moves});
+  anim={m,d,t0:performance.now(),n:m.trail.length-1,from:[S.x,S.y]};
+}
+function finish(){
+  const m=anim.m;S.x=m.x;S.y=m.y;S.holes=m.holes;S.moves++;
+  if(m.res==='ok'){anim=null;draw_hud();return}
+  anim.done=m.res;anim.t1=performance.now();draw_hud();
+  if(m.res==='win'){toast('✨ クリア！ <span style="color:#ffd24a">'+(fl+1)+'F</span> へ上がる',1300);
+    setTimeout(()=>load(fl+1),1400)}
+  else{fall++;const dn=Math.max(1,fl-1);toast('🕳 穴に落ちた…<br>'+(fl>1?'<span style="color:#ffd24a">'+dn+'F</span> に落下':'1Fからやり直し'),1400);
+    setTimeout(()=>{load(dn)},1500)}
+}
+$('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
+$('#reset').onclick=()=>{if(!anim)load(fl,curRows)};
+$('#hint').onclick=()=>{if(anim)return;const d=findSol(S.x,S.y,S.holes);if(d===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=d;hintT=performance.now()};
+function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList.toggle('on',v==='dpad')}
+$('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
+function setView(){VIEW=+$('#vw').value;VSH=$('#vs').value;ST.set('ice_vw',VIEW);ST.set('ice_vs',VSH);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
+$('#vw').onchange=$('#vs').onchange=setView;
+$('#cr').onchange=()=>{if(anim)return;NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl)};
+document.querySelectorAll('#dp button').forEach(b=>b.onclick=()=>act(+b.dataset.d));
+addEventListener('keydown',e=>{const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(k!=null){e.preventDefault();act(k)}});
+let p0=null;
+cv.addEventListener('pointerdown',e=>{p0=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointerup',e=>{if(!p0)return;if($('#ctl').value!=='swipe'){p0=null;return}
+  const dx=e.clientX-p0[0],dy=e.clientY-p0[1];p0=null;if(Math.max(Math.abs(dx),Math.abs(dy))<22)return;
+  act(Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0))});
+
+/* ===== 描画 ===== */
+function frame(now){
+  cx.clearRect(0,0,W,H);
+  let pxp=S.x,pyp=S.y,vis=S.holes,scale=1,alpha=1,sparkle=false;
+  if(anim){const sp=75;const prog=Math.max(0,Math.min(anim.n,(now-anim.t0)/sp));const i=Math.floor(prog),f=prog-i;
+    const a=anim.m.trail[i],b=anim.m.trail[Math.min(i+1,anim.n)];pxp=a[0]+(b[0]-a[0])*f;pyp=a[1]+(b[1]-a[1])*f;sparkle=!anim.done;
+    vis=S.holes.slice();for(let k=0;k<Math.floor(prog+0.0001);k++){const [tx,ty]=anim.m.trail[k];if(g[ty][tx]==='c'&&!vis.includes(ty*C+tx))vis.push(ty*C+tx)}
+    if(prog>=anim.n&&!anim.fin){anim.fin=1;finish()}}
+  if(anim&&anim.done){const t=Math.min(1,(now-anim.t1)/600);if(anim.done==='fall'){scale=Math.max(.1,1-t*.9);alpha=1-t*.6}else{scale=1+Math.sin(t*3.14)*.25}}
+  for(let y=0;y<R;y++)for(let x=0;x<C;x++){const ch=g[y][x];tile(ch,x,y,(ch==='c'&&vis.includes(y*C+x))?'hole':null)}
+  if(VIEW>0){for(let y=0;y<R;y++)for(let x=0;x<C;x++){const dx=Math.abs(x-pxp),dy=Math.abs(y-pyp);const d=VSH==='dm'?dx+dy:Math.max(dx,dy);if(d>VIEW+0.01)P(x*T,y*T,T,T,'#050d16')}}
+  // 軌跡（白い1ドットの線）
+  if($('#tr').value==='1'&&anim&&!anim.done){const x0=Math.round(anim.from[0]*T+8),y0=Math.round(anim.from[1]*T+8),x1=Math.round(pxp*T+8),y1=Math.round(pyp*T+8);
+    P(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0)+1,Math.abs(y1-y0)+1,'rgba(255,255,255,.85)')}
+  // ヒント（ドットの矢印）
+  if(hintDir>=0){if(now-hintT>3000)hintDir=-1;else{const on=Math.floor(now/160)%2;if(on){const d=hintDir,ax=S.x*T+8+D[d][0]*11,ay=S.y*T+8+D[d][1]*11;cx.fillStyle='#ff5a7a';
+      for(let i=0;i<5;i++){const w=4-i;const fx_=d===1?-i:d===3?i:0,fy_=d===2?-i:d===0?i:0;
+        if(d===0||d===2)cx.fillRect(ax-w+(0),ay+(d===0?i:-i)-0,w*2+1,1);else cx.fillRect(ax+(d===1?-i:i),ay-w,1,w*2+1)}}}}
+  // きらめき
+  if(sparkle&&Math.random()<.8)fx.push({k:'sp',x:Math.round(pxp*T+3+Math.random()*10),y:Math.round(pyp*T+3+Math.random()*10),t:now});
+  fx=fx.filter(f=>now-f.t<(f.k==='bump'?250:350));
+  for(const f of fx)if(f.k==='sp'){const a=1-(now-f.t)/350;P(f.x,f.y,1,1,a>.5?'#fff':'#a8dcef')}
+  // ペンギン
+  const bf=fx.find(f=>f.k==='bump');let ox=0,oy=0;if(bf){const a=1-(now-bf.t)/250;ox=Math.round(D[bf.d][0]*2*a);oy=Math.round(D[bf.d][1]*2*a)}
+  const cxp=Math.round(pxp*T)+ox,cyp=Math.round(pyp*T)+oy;
+  P(cxp+3,cyp+14,10,2,'rgba(0,0,0,.22)');
+  cx.save();cx.globalAlpha=alpha;cx.translate(cxp+8,cyp+8);cx.scale(scale,scale);cx.drawImage(PENGUIN,-8,-8);cx.restore();
+  requestAnimationFrame(frame);
+}
+// 凡例もドット絵で
+(function(){const items=[['.','氷（止まれない）'],['s','石の床（止まる）'],['c','ひび割れ（通ると穴）'],['hole','穴（落ちる）'],['o','障害物（氷の塊）'],['G','階段（上の階へ）']];
+  $('#leg').innerHTML=items.map(it=>`<span><canvas width="16" height="16" data-k="${it[0]}"></canvas>${it[1]}</span>`).join('');
+  document.querySelectorAll('#leg canvas').forEach(c=>{cx=c.getContext('2d');cx.imageSmoothingEnabled=false;tile(c.dataset.k,0,0)});cx=MAIN})();
+load(1);requestAnimationFrame(frame);
+</script>
+</body></html>
