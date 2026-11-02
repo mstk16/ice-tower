@@ -395,12 +395,6 @@ function genBuilt(floor,seed,want){const r=mkRng(seed),K=(x,y)=>x+','+y,early=fl
   if(!nearMiss({g,sx,sy},path)){const nbO=[],nbS=[];for(let a=-3;a<=3;a++)for(let b=-3;b<=3;b++){const px=gx+a,py=gy+b;if((a||b)&&inB(px,py)&&g[py][px]==='.'&&!used.has(K(px,py))){nbO.push([px,py]);if(Math.abs(a)<=1&&Math.abs(b)<=1)nbS.push([px,py])}}
     for(const L2 of [nbO,nbS])for(let i=L2.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[L2[i],L2[j]]=[L2[j],L2[i]]}
     done:for(const [kind,list] of [['o',nbO],['s',nbS]])for(const [px,py] of list){g[py][px]=kind;let ok=nearMiss({g,sx,sy},path);if(ok&&!early){const s=solveCount(g,sx,sy);ok=s.count===1&&s.nodes<6000&&s.best.join('')===key}if(ok)break done;g[py][px]='.'}}
-  // 使わない岩（誤ルートで止まる・ぶつかる役の岩）を足す。序盤ほど多く、答えが複数になってもよい
-  {const nd=early?3+Math.floor(r()*3):1+Math.floor(r()*3);let a=0;
-    for(let i=0;i<60&&a<nd;i++){const px=Math.floor(r()*C),py=Math.floor(r()*R);if(g[py][px]!=='.'||used.has(K(px,py)))continue;
-      let nearUsed=false;for(let dx=-2;dx<=2&&!nearUsed;dx++)for(let dy=-2;dy<=2;dy++)if(used.has(K(px+dx,py+dy))){nearUsed=true;break}
-      if(!nearUsed&&r()<0.8)continue;
-      g[py][px]='o';if(!early){const s=solveCount(g,sx,sy);if(!(s.count===1&&s.nodes<6000&&s.best.join('')===key)){g[py][px]='.';continue}}a++}}
   return{g,sx,sy}}
 // 一番短い答え（手数の目安に使う）。見つからなければ null
 function shortest(g,sx,sy){const seen=new Set([sx+','+sy+',']),q=[[sx,sy,[],[]]];let nodes=0;
@@ -431,10 +425,29 @@ function nearMiss(L,path){let x=L.sx,y=L.sy,h=[];const solStops=new Set();
       if(Math.max(Math.abs(m.x-gx),Math.abs(m.y-gy))===1&&!solStops.has(m.x+','+m.y))return true;
       const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);q.push([m.x,m.y,m.holes])}}
   return false}
-// 誰も触らない障害物は外し、「階段の隣に止まれる誤ルート」がある階だけ通す。誤ルートだけで使う障害物は 序盤6個・以降5個 まで。時間がかかりすぎたら通す
-function polish(L,path,floor,el){if(el>2600)return true;if(!nearMiss(L,path))return false;const u=usage(L,path);for(const [x,y] of u.deadCells)L.g[y][x]='.';let ro=0,st=0;for(const row of L.g)for(const ch of row){if(ch==='o')ro++;if(ch==='s')st++}
-  return st<=Math.max(1,Math.floor(ro/5))&&u.extra<=6&&u.tot-u.dead>=(floor<=7?7:6)}
-
+// 全部の手の組み合わせで、通る・止まる・落ちるマスの集まり（到達判定）
+function reachCells(L){const seen=new Set(),q=[[L.sx,L.sy,[]]],cells=new Set([L.sx+','+L.sy]);seen.add(L.sx+','+L.sy+',');let n=0;
+  while(q.length&&n++<20000){const [x,y,hs]=q.shift();
+    for(let d=0;d<4;d++){const m=move(L.g,hs,x,y,d);if(!m)continue;for(const t of m.trail)cells.add(t[0]+','+t[1]);if(m.res!=='ok')continue;
+      const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);q.push([m.x,m.y,m.holes])}}
+  return cells}
+// どの手でも通らず止まらない空きマス（岩のマスは除く）
+function unreach(L){const rc=reachCells(L);const out=[];for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(L.g[y][x]!=='o'&&!rc.has(x+','+y))out.push([x,y]);return out}
+// 使わない岩（誤ルートで止まる・ぶつかる役の岩）を足す。どの手でも通れない・止まれない空きマスが一番減る場所を選んで置く
+function addDecoys(L,path,floor){const early=floor<=7,key=path.join('');const nd=early?3+Math.floor(Math.random()*3):2+Math.floor(Math.random()*3);
+  const used=new Set();{let x=L.sx,y=L.sy,h=[];used.add(x+','+y);for(const d of path){const m=move(L.g,h,x,y,d);for(const t of m.trail)used.add(t[0]+','+t[1]);x=m.x;y=m.y;h=m.holes}}
+  for(let i=0;i<nd;i++){const cand=[];
+    for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(L.g[y][x]==='.'&&!used.has(x+','+y))cand.push([x,y]);
+    for(let k=cand.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[cand[k],cand[j]]=[cand[j],cand[k]]}
+    const sc=[];for(const [x,y] of cand.slice(0,24)){L.g[y][x]='o';sc.push([unreach(L).length+Math.random()*0.5,x,y]);L.g[y][x]='.'}
+    sc.sort((a,b)=>a[0]-b[0]);
+    for(const [,x,y] of sc){L.g[y][x]='o';if(early){break}const s=solveCount(L.g,L.sx,L.sy);if(s.count===1&&s.nodes<6000&&s.best.join('')===key)break;L.g[y][x]='.'}}
+  return L}
+// 階段の隣に止まれる誤ルートがあり、行けない空きマスが少なく、誰も触らない障害物は外し、止まる床は岩に対して少ない階だけ通す。時間がかかりすぎたら通す
+function polish(L,path,floor,el){if(el>2600)return true;if(!nearMiss(L,path))return false;addDecoys(L,path,floor);if(!nearMiss(L,path))return false;
+  const u=usage(L,path);for(const [x,y] of u.deadCells)L.g[y][x]='.';
+  let ro=0,st=0;for(const row of L.g)for(const ch of row){if(ch==='o')ro++;if(ch==='s')st++}
+  return st<=Math.max(1,Math.floor(ro/5))&&u.extra<=6&&u.tot-u.dead>=(floor<=7?7:6)&&unreach(L).length<=(floor<=7?1:3)}
 function isWide(L,path){const sp=spreadOf(L.g,L.sx,L.sy,path);return sp.w>=C-2&&sp.h>=R-3&&sp.cov>=0.4} // 解が盤面のほぼ端から端まで使う（使われない部分を減らす）
 // 止まる理由が「盤面の端」や「端に並んだ障害物」ばかりの階を避ける（内側の障害物・石の床で止まる手を半分以上にする）
 function onRing(x,y){return x===0||y===0||x===C-1||y===R-1}
@@ -471,7 +484,7 @@ function genLevelQuick(floor){const job=newJob(floor);job.ext=0;job.work=2300;le
 let PRE={}; // 裏で先に作っておいた階（キー→{rows}）。作るのは別スレッド（Worker）なので、遊んでいる画面は止まらない
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
 const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=11;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
-  +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
+  +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,reachCells,unreach,addDecoys,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
   +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
 let GW=null;
 try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
@@ -644,7 +657,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0159';
+const BUILD='20261103-0211';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
