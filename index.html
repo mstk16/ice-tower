@@ -134,14 +134,14 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 @media (prefers-reduced-motion:reduce){#skinbtn.pulse2{animation:none}}
 </style>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
-<div class="bar"><div class="fl" title="今の階"><span class="hl">階</span><b id="fl">1F</b></div><div title="手数（今の手数 / 最短の手数）"><span class="hl">手数（最短）</span><b id="mv">0</b></div><div title="穴に落ちた回数"><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
+<div class="bar"><div class="fl" title="今の階"><span class="hl">階</span><b id="fl">1F</b></div><div title="手数"><span class="hl">手数</span><b id="mv">0</b></div><div title="穴に落ちた回数"><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
 <div class="btns"><button id="undo" class="act a-undo" title="1つ戻す" aria-label="1つ戻す"><canvas class="ai" data-i="undo"></canvas><span>1つ戻す</span></button><button id="reset" class="act a-reset" title="スタート地点に戻る（この階を最初から）" aria-label="スタート地点に戻る"><canvas class="ai" data-i="reset"></canvas><span class="lg">スタート地点に戻る</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
 <div id="goalpanel" hidden></div><div class="opts" id="opts"></div><div class="row"><label>演出 <select id="fx"><option value="2">標準</option><option value="1">控えめ</option><option value="0">なし</option></select></label><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。5階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ランクが高いほど出にくく、高い階でしか出ない。ペンギンの色違いは5階から、ペンギン以外のスキンは30階から。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る。ランク1・2は色違い、3は色違い＋光や炎などの演出、4は別の生き物、5はさらにゆれたり点滅したりする）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。5階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ランクが高いほど出にくく、高い階でしか出ない。ペンギンの色違いは5階から、ペンギン以外のスキンは30階から。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る。ランク1・2は色違い、3は色違い＋光や炎などの演出、4は別の生き物、5はさらにゆれたり点滅したりする）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は今までの手数だけ表示する）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -548,7 +548,7 @@ function genBuilt(floor,seed,want){const r=mkRng(seed),K=(x,y)=>x+','+y,early=fl
     if(!ok)return null}
   const g=ty.map(row=>row.slice());g[sy][sx]='S';g[gy][gx]='G';
   if(floor>=2&&!NOCR){const cand=[];for(const k in cnt){if(cnt[k]!==1||stops.has(k))continue;const [a,b]=k.split(',').map(Number);if(g[b][a]==='.')cand.push([a,b])}
-    if(cand.length){const c=cand[Math.floor(r()*cand.length)];g[c[1]][c[0]]='c'}}
+    if(cand.length&&r()<0.5){const c=cand[Math.floor(r()*cand.length)];g[c[1]][c[0]]='c'}}
   // 作った道のとおりに進めるか確かめる
   {let px=sx,py=sy,h=[],res=null;for(const d of path){const m=move(g,h,px,py,d);if(!m||m.res==='fall'){return null}px=m.x;py=m.y;h=m.holes;res=m.res}if(res!=='win')return null}
   const key=path.join('');
@@ -610,10 +610,16 @@ function addDecoys(L,path,floor){const early=floor<=7,key=path.join('');const nd
     for(const [,x,y] of sc){L.g[y][x]='o';if(early){break}const s=solveCount(L.g,L.sx,L.sy);if(s.count===1&&s.nodes<6000&&s.best.join('')===key)break;L.g[y][x]='.'}}
   return L}
 // 階段の隣に止まれる誤ルートがあり、行けない空きマスが少なく、誰も触らない障害物は外し、止まる床は岩に対して少ない階だけ通す。時間がかかりすぎたら通す
-function polish(L,path,floor,el){if(stairOpen(L.g)<3)return false;if(el>2600)return true;if(!nearMiss(L,path))return false;addDecoys(L,path,floor);if(!nearMiss(L,path))return false;
+// ひび割れは数枚。正解ルートを避けて、誤ルートが通るマスへ足す（どれが本物か絞れないようにする）
+function addCracks(L,path,floor){if(NOCR||floor<2)return;const tgt=Math.min(2+Math.floor((floor-2)/2),5)+(Math.random()<0.4?1:0);let have=0;for(const row of L.g)for(const ch of row)if(ch==='c')have++;
+  const used=new Set();{let x=L.sx,y=L.sy,h=[];used.add(x+','+y);for(const d of path){const m=move(L.g,h,x,y,d);for(const t of m.trail)used.add(t[0]+','+t[1]);x=m.x;y=m.y;h=m.holes}}
+  const rc=reachCells(L),cand=[];for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(L.g[y][x]==='.'&&!used.has(x+','+y)&&rc.has(x+','+y))cand.push([x,y]);
+  for(let k=cand.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[cand[k],cand[j]]=[cand[j],cand[k]]}
+  const key=path.join('');for(let i=0,t=0;i<cand.length&&have<tgt&&t<30;i++,t++){const [x,y]=cand[i];L.g[y][x]='c';const s=solveCount(L.g,L.sx,L.sy);if(s.nodes<6000&&(floor<=7?s.count>=1:(s.count===1&&s.best.join('')===key)))have++;else L.g[y][x]='.'}} // 足したせいで正解が増える・消える所には置かない
+function polish(L,path,floor,el){if(stairOpen(L.g)<3)return false;if(el>2600){addCracks(L,path,floor);return true}if(!nearMiss(L,path))return false;addDecoys(L,path,floor);if(!nearMiss(L,path))return false;
   const u=usage(L,path);for(const [x,y] of u.deadCells)L.g[y][x]='.';
   let ro=0,st=0;for(const row of L.g)for(const ch of row){if(ch==='o')ro++;if(ch==='s')st++}
-  return stairOpen(L.g)>=3&&st<=Math.max(1,Math.floor(ro/5))&&u.extra<=6&&u.tot-u.dead>=(floor<=7?7:6)&&unreach(L).length<=(floor<=7?1:3)}
+  if(!(stairOpen(L.g)>=3&&st<=Math.max(1,Math.floor(ro/5))&&u.extra<=6&&u.tot-u.dead>=(floor<=7?7:6)&&unreach(L).length<=(floor<=7?1:3)))return false;addCracks(L,path,floor);return true}
 function isWide(L,path){const sp=spreadOf(L.g,L.sx,L.sy,path);return sp.w>=C-2&&sp.h>=R-3&&sp.cov>=0.4} // 解が盤面のほぼ端から端まで使う（使われない部分を減らす）
 // 止まる理由が「盤面の端」や「端に並んだ障害物」ばかりの階を避ける（内側の障害物・石の床で止まる手を半分以上にする）
 function onRing(x,y){return x===0||y===0||x===C-1||y===R-1}
@@ -640,17 +646,17 @@ function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.w
     const fe=job.ext>0?Math.min(el,2200):el; // 作り直せる間は、条件をゆるめない
     const lv=want>=8?2:(el<800?0:el<1700?1:2); // 0=広さ＋内側で止まる手を重視 1=広さだけ 2=どちらも問わない（階段は常に外周以外）
     const sd=(Math.random()*4294967296)>>>0;const L=genBuilt(f,sd,want);if(!L)continue;
-    const s=solveCount(L.g,L.sx,L.sy);if(f<=7){if(s.count<1||s.nodes>=6000)continue;const sp=shortest(L.g,L.sx,L.sy);if(!sp)continue;s.best=sp}else if(s.count!==1||s.nodes>=6000)continue;if(f>=2&&!NOCR&&crackUsed(L.g,L.sx,L.sy,s.best)<1)continue;
+    const s=solveCount(L.g,L.sx,L.sy);if(f<=7){if(s.count<1||s.nodes>=6000)continue;const sp=shortest(L.g,L.sx,L.sy);if(!sp)continue;s.best=sp}else if(s.count!==1||s.nodes>=6000)continue;
     const d=Math.abs(s.best.length-want);let rows=L.g.map(r=>r.join(''));
-    if(!levelOK(L,s.best,lv,fe,f)){if(d<job.ld){job.ld=d;job.loose=rows}continue}
-    if(!polish(L,s.best,f,fe))continue;rows=L.g.map(r=>r.join(''));if(d===0||(f<=7&&d<=1&&el>500)){job.done=rows;return rows}if(d<job.nd){job.nd=d;job.near=rows}}
+    if(!levelOK(L,s.best,lv,fe,f)){if(d<job.ld&&d<=(f<=7?1:2)){job.ld=d;job.loose=rows}continue}
+    if(!polish(L,s.best,f,fe))continue;if(f<=7){const q=shortest(L.g,L.sx,L.sy);if(!q||Math.abs(q.length-want)>1)continue}rows=L.g.map(r=>r.join(''));if(d===0||(f<=7&&d<=1&&el>500)){job.done=rows;return rows}if(d<job.nd&&d<=(f<=7?1:2)){job.nd=d;job.near=rows}}
   job.work+=performance.now()-t1;return null}
 function genLevelBase(floor){const job=newJob(floor);let r=null;while(!(r=stepJob(job,1000)));return r}
 function genLevelQuick(floor){const job=newJob(floor);job.ext=0;job.work=2300;let r=null;while(!(r=stepJob(job,500)));return r} // すぐ必要なとき用（0.7秒以内。条件は少しゆるい）
 let PRE={}; // 裏で先に作っておいた階（キー→{rows}）。作るのは別スレッド（Worker）なので、遊んでいる画面は止まらない
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
 const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=11;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
-  +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,reachCells,unreach,stairOpen,addDecoys,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
+  +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,reachCells,unreach,stairOpen,addDecoys,addCracks,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
   +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
 let GW=null;
 try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
@@ -680,7 +686,7 @@ function pickUnowned(t){const u=unownedIn(t);return u[Math.floor(Math.random()*u
 function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s=pickUnowned(t);OWNED.push(s.id);const promos=[];let again=true;
   while(again){again=false;for(let k=1;k<PROMO_MAX;k++){if(!GIVEN[k]&&ownedIn(k)>=NEED&&unownedIn(k+1).length){GIVEN[k]=true;const rw=pickUnowned(k+1);OWNED.push(rw.id);promos.push({from:k,s:rw});again=true}}}
   saveSkins();return{s,promos}}
-function openChest(x,y){if(g[y][x]!=='B')return;g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
+function openChest(x,y){if(g[y][x]!=='B')return;if(hintUsed){toast('🔒 ヒントを使った階の宝箱は開かない',1600);return}g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
   const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
   const R1=RARITY[r.s.tier];ovAdd({k:'chest',t:performance.now(),cx:x*16+8,cy:y*16+8,id:r.s.id,col:R1.col,l:r.s.tier});r.promos.forEach((p,i)=>ovAdd({k:'promo',t:performance.now()+700+i*1300,id:p.s.id,col:RARITY[p.s.tier].col}));let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';
   r.promos.forEach(p=>{const R2=RARITY[p.s.tier];msg+='<br><span style="font-size:13px;color:#ffd24a">⬆ '+RARITY[p.from].star+'が'+NEED+'つそろった！ <span style="color:'+R2.col+'">'+R2.star+'</span> 「'+p.s.name+'」</span>'});
@@ -791,7 +797,7 @@ function renderGoals(){const el=$('#goalpanel'),gl=goalList(),t=myTitle();
   h+='<i class="bst" style="left:'+pos(best)+'%"></i><i class="me" style="left:'+pos(fl)+'%"></i></div>';el.innerHTML=h}
 function milestone(f){toast('<span style="color:var(--ac);font-size:17px">'+f+'F　節目</span><br><span style="font-size:13px">称号「'+titleOf(f)+'」を手に入れた</span>',3000);
   if(FXLV>0)ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>1?36:14,7)})}
-function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
+function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
 function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
 function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
 function act(d){
@@ -854,7 +860,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0414';
+const BUILD='20261103-0814';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -874,7 +880,7 @@ $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr'
 function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
 $('#vw').onchange=setView;
 $('#fx').value=String(FXLV);goalBtnFx();$('#fx').onchange=()=>{FXLV=+$('#fx').value;ST.set('ice_fx',FXLV);OV.length=0;$('#bn').classList.remove('on');goalBtnFx()};
-$('#cr').onchange=()=>{if(anim)return;NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl)};
+$('#cr').onchange=()=>{if(anim)return;NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl,curRows);toast('設定は次の階から切り替わる',1500)};
 document.querySelectorAll('#dp button').forEach(b=>b.onclick=()=>act(+b.dataset.d));
 addEventListener('keydown',e=>{const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(k!=null){e.preventDefault();act(k)}});
 let p0=null;
