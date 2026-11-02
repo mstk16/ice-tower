@@ -85,6 +85,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .bxs{display:flex;gap:3px}
 .bx{display:block;width:14px;height:14px;border:2px solid #27507a;border-radius:3px;background:#0a1a2a}
 .pr .ar{color:var(--mu)}
+.pr{flex-wrap:nowrap;white-space:nowrap}.pr .rs{width:auto;min-width:52px}.pr .ar+.rs{min-width:64px}
 </style></head><body>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
@@ -95,7 +96,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 <div class="opts" id="opts"></div><div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。10階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ふつう70%・レア22%・スーパーレア6%・でんせつ2%の確率で出る。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。5階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ランクが高いほど出にくく、高い階でしか出ない。ペンギンの色違いは5階から、ペンギン以外のスキンは30階から。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -129,40 +130,50 @@ const PENROWS=[
 "...OOOKKKKOOO...",
 "..OOOO......OOOO"];
 const SKINS=[
- {id:'def',name:'ペンギン',tier:0,pal:{K:'#14142b',B:'#2f4a86',W:'#f4f8ff',O:'#ffa21f'}},
- {id:'red',name:'あか',tier:1,pal:{K:'#2b0f14',B:'#b8323c',W:'#fff1ee',O:'#ffd24a'}},
- {id:'green',name:'みどり',tier:1,pal:{K:'#0f2b18',B:'#2f9b55',W:'#f2fff4',O:'#ffa21f'}},
- {id:'yellow',name:'ひよこ',tier:1,pal:{K:'#3a2a05',B:'#f0c43a',W:'#fffbe8',O:'#ff7a1f'}},
- {id:'aqua',name:'みずいろ',tier:1,pal:{K:'#0b2b3a',B:'#38b6d8',W:'#f2fdff',O:'#ffa21f'}},
- {id:'orange',name:'だいだい',tier:1,pal:{K:'#3a1a05',B:'#e8782a',W:'#fff3e6',O:'#ffd24a'}},
- {id:'gray',name:'はいいろ',tier:1,pal:{K:'#1a1d26',B:'#7d8794',W:'#f4f6fa',O:'#ffa21f'}},
- {id:'purple',name:'むらさき',tier:2,pal:{K:'#1f0f33',B:'#7a4ac8',W:'#f6efff',O:'#ffb347'}},
- {id:'pink',name:'さくら',tier:2,pal:{K:'#33121f',B:'#e879a8',W:'#fff3f8',O:'#ffd24a'}},
- {id:'white',name:'しろくま風',tier:2,pal:{K:'#14142b',B:'#dbe8f4',W:'#ffffff',O:'#ffa21f'}},
- {id:'blue',name:'あおぞら',tier:2,pal:{K:'#0a1a3a',B:'#2a5fd0',W:'#eef3ff',O:'#ffd24a'}},
- {id:'lime',name:'もえぎ',tier:2,pal:{K:'#1d2b0a',B:'#8fd13a',W:'#f6ffe8',O:'#ff8a3a'}},
- {id:'brown',name:'ちゃいろ',tier:2,pal:{K:'#2a1608',B:'#8a5a2b',W:'#fff3e3',O:'#ffd24a'}},
- {id:'gold',name:'おうごん',tier:3,pal:{K:'#4a3200',B:'#e6b422',W:'#fff6cc',O:'#c0392b'}},
- {id:'black',name:'くろ',tier:3,pal:{K:'#000000',B:'#1a1a22',W:'#9aa0b0',O:'#ff4a4a'}},
- {id:'silver',name:'ぎん',tier:3,pal:{K:'#2a2f3a',B:'#c9d3df',W:'#ffffff',O:'#ff7a1f'}},
- {id:'ruby',name:'ルビー',tier:3,pal:{K:'#2b0510',B:'#d11f4f',W:'#ffe9ef',O:'#ffd24a'}},
- {id:'emerald',name:'エメラルド',tier:3,pal:{K:'#052b1a',B:'#16b07a',W:'#e8fff5',O:'#ffd24a'}},
- {id:'rainbow',name:'にじ',tier:4,rainbow:true,pal:{K:'#14142b',B:'#e0443c',W:'#f4f8ff',O:'#ffa21f'}},
- {id:'galaxy',name:'ぎんが',tier:4,pal:{K:'#0a0a2a',B:'#2a1a6a',W:'#cfd8ff',O:'#ff7ad9'}}
+ {id:'def',name:'ペンギン',tier:0,pal:{'K':'#14142b','B':'#2f4a86','W':'#f4f8ff','O':'#ffa21f'}},
+ {id:'red',name:'あか',tier:1,pal:{'K':'#2b0f14','B':'#b8323c','W':'#fff1ee','O':'#ffd24a'}},
+ {id:'green',name:'みどり',tier:1,pal:{'K':'#0f2b18','B':'#2f9b55','W':'#f2fff4','O':'#ffa21f'}},
+ {id:'yellow',name:'ひよこ',tier:1,pal:{'K':'#3a2a05','B':'#f0c43a','W':'#fffbe8','O':'#ff7a1f'}},
+ {id:'aqua',name:'みずいろ',tier:1,pal:{'K':'#0b2b3a','B':'#38b6d8','W':'#f2fdff','O':'#ffa21f'}},
+ {id:'orange',name:'だいだい',tier:1,pal:{'K':'#3a1a05','B':'#e8782a','W':'#fff3e6','O':'#ffd24a'}},
+ {id:'gray',name:'はいいろ',tier:1,pal:{'K':'#1a1d26','B':'#7d8794','W':'#f4f6fa','O':'#ffa21f'}},
+ {id:'purple',name:'むらさき',tier:2,pal:{'K':'#1f0f33','B':'#7a4ac8','W':'#f6efff','O':'#ffb347'}},
+ {id:'pink',name:'さくら',tier:2,pal:{'K':'#33121f','B':'#e879a8','W':'#fff3f8','O':'#ffd24a'}},
+ {id:'white',name:'ゆきいろ',tier:2,pal:{'K':'#14142b','B':'#dbe8f4','W':'#ffffff','O':'#ffa21f'}},
+ {id:'blue',name:'あおぞら',tier:2,pal:{'K':'#0a1a3a','B':'#2a5fd0','W':'#eef3ff','O':'#ffd24a'}},
+ {id:'lime',name:'もえぎ',tier:2,pal:{'K':'#1d2b0a','B':'#8fd13a','W':'#f6ffe8','O':'#ff8a3a'}},
+ {id:'brown',name:'ちゃいろ',tier:2,pal:{'K':'#2a1608','B':'#8a5a2b','W':'#fff3e3','O':'#ffd24a'}},
+ {id:'gold',name:'おうごん',tier:3,pal:{'K':'#4a3200','B':'#e6b422','W':'#fff6cc','O':'#c0392b'}},
+ {id:'black',name:'くろ',tier:3,pal:{'K':'#000000','B':'#1a1a22','W':'#9aa0b0','O':'#ff4a4a'}},
+ {id:'silver',name:'ぎん',tier:3,pal:{'K':'#2a2f3a','B':'#c9d3df','W':'#ffffff','O':'#ff7a1f'}},
+ {id:'ruby',name:'ルビー',tier:3,pal:{'K':'#2b0510','B':'#d11f4f','W':'#ffe9ef','O':'#ffd24a'}},
+ {id:'emerald',name:'エメラルド',tier:3,pal:{'K':'#052b1a','B':'#16b07a','W':'#e8fff5','O':'#ffd24a'}},
+ {id:'rainbow',name:'にじ',tier:3,rainbow:true,pal:{'K':'#14142b','B':'#e0443c','W':'#f4f8ff','O':'#ffa21f'}},
+ {id:'galaxy',name:'ぎんが',tier:3,pal:{'K':'#0a0a2a','B':'#2a1a6a','W':'#cfd8ff','O':'#ff7ad9'}},
+ {id:'snow',name:'ゆきだるま',tier:4,rows:["................",".....KBBBBK.....",".....KBBBBK.....","....KBBBBBBK....","...KWWWWWWWWK...","...KWBWWWWBWK...","...KWWWOOWWWK...","...KSWWWWWWSK...","..KRRRRRRRRRRK..","...KWWWWWWWWK...","..KWWWBWWWWWWK..","..KWWWWWWWWWWK..","..KWWWBWWWWWWK..","..KSWWWWWWWWSK..","...KKSSSSSSKK...","................"],pal:{'K':'#2a3a55','W':'#f4f9ff','S':'#c9dcf0','O':'#ff8a2a','B':'#1a1a2a','R':'#d6384a'}},
+ {id:'seal',name:'あざらし',tier:4,rows:["................","................","......KKKK......",".....KGGGGK.....","....KGGGGGGK....","....KGEGGEGK....","....KGGNNGGK....","....KGWWWWGK....","...KGGGWWGGGK...","..KGGGGGGGGGGK..",".KGGLGGGGGGGGGK.",".KGGGGGGGGGGDDK.",".KGGGGGGGGGDDDK.","..KKGGGGGGDDKK..","...KDDKKKKDDK...","................"],pal:{'K':'#1f2a3d','G':'#8fa3b8','L':'#c5d3e0','D':'#6d8199','W':'#f2f6fa','E':'#0a0a14','N':'#222233'}},
+ {id:'bear',name:'シロクマ',tier:4,rows:["................","..KKK......KKK..",".KWWWKKKKKKWWWK.",".KWWWWWWWWWWWWK.","..KWWWWWWWWWWK..","..KWWEWWWWEWWK..","..KWWWWNNWWWWK..","..KWWWWSSWWWWK..","...KKWWWWWWKK...","..KWWWWWWWWWWK..",".KWWWWWWWWWWWWK.",".KWWSWWWWWWSWWK.",".KWWWWWWWWWWWWK.","..KWWKKWWKKWWK..","...KK......KK...","................"],pal:{'K':'#2a3a55','W':'#f7fbff','S':'#cfe0f0','N':'#1a1a2a','E':'#1a1a2a'}},
+ {id:'cat',name:'ねこ',tier:4,rows:["................","..KK........KK..","..KOK......KOK..","..KOOKKKKKKOOK..","..KOOOOOOOOOOK..","..KOOEOOOOEOOK..","..KOOOOPPOOOOK..","..KOWWOOOOWWOK..","...KOOOOOOOOK...","...KOODOOODOK...","..KOOOOOOOOOOK..","..KOODOOOODOOK..","..KOOOOOOOOOOK..","..KOWWKOOKWWOK..","...KKKKKKKKKK...","................"],pal:{'K':'#3a1f0a','O':'#f0a64a','D':'#c97a24','W':'#fff3e0','E':'#1a1a2a','P':'#ff8a9a'}},
+ {id:'fox',name:'きつね',tier:4,rows:["................","..KK........KK..",".KOOK......KOOK.",".KOBOKKKKKKOBOK.","..KOOOOOOOOOOK..","..KOOEOOOOEOOK..","..KWOOOOOOOOWK..","...KWWOOOOWWK...","....KWWNNWWK....",".....KWWWWK.....","..KKOOOOOOOOKK..",".KOOOOWWWWOOOOK.",".KOOOOWWWWOOOOK.","..KOOKKKKKKOOK..","...KK......KK...","................"],pal:{'K':'#3a1a0a','O':'#e8742a','W':'#fff6ec','B':'#3a1f14','E':'#1a1a2a','N':'#1a1a2a'}},
+ {id:'robot',name:'ロボット',tier:5,rows:["................",".......KK.......",".......RR.......","...KKKKKKKKKK...","..KGGGGGGGGGGK..","..KGEEGGGGEEGK..","..KGEEGGGGEEGK..","..KGGGGGGGGGGK..","..KGKKKKKKKKGK..","..KGGGGGGGGGGK..","...KKKKKKKKKK...","..KGGGKGGKGGGK..","..KGGGKGGKGGGK..","..KDDDKDDKDDDK..","...KKK....KKK...","................"],pal:{'K':'#1c2433','G':'#9fb0c4','D':'#6f8097','E':'#6df0ff','R':'#ff5a5a'}},
+ {id:'ghost',name:'おばけ',tier:5,rows:["................",".....KKKKKK.....","....KWWWWWWK....","...KWWWWWWWWK...","..KWWWWWWWWWWK..","..KWWKKWWKKWWK..","..KWWKEWWKEWWK..","..KWWKKWWKKWWK..","..KWWWWWWWWWWK..","..KWWWWKKWWWWK..","..KWWWWWWWWWWK..","..KWWWWWWWWWWK..","..KWSWWWWWWSWK..","..KWKWWKKWWKWK..","...KK.KKKK.KK...","................"],pal:{'K':'#2b2f55','W':'#eef0ff','S':'#c9ccf0','E':'#14142b'}}
 ];
-// レア度: 宝箱から出る確率（w）。同じスキンは出ない。同じランクを NEED 個集めると、1つ上のランクのスキンが1つ手に入る
-const RARITY=[null,{name:'ふつう',star:'★',col:'#9bbbd6',w:70},{name:'レア',star:'★★',col:'#5aa0ff',w:22},{name:'スーパーレア',star:'★★★',col:'#c77dff',w:6},{name:'でんせつ',star:'★★★★',col:'#ffd24a',w:2}];
+// レア度: 宝箱から出る確率（w）と、出始める階（MINF）。高いランクほど高い階でしか出ない。ペンギンの色違いは低い階から、ペンギン以外は高い階だけ
+// 同じスキンは出ない。同じランクを NEED 個集めると、1つ上のランクのスキンが1つ手に入る
+const RARITY=[null,{name:'ふつう',star:'★',col:'#9bbbd6',w:70},{name:'レア',star:'★★',col:'#5aa0ff',w:22},{name:'スーパーレア',star:'★★★',col:'#c77dff',w:6},{name:'でんせつ',star:'★★★★',col:'#ffd24a',w:2},{name:'ちょうでんせつ',star:'★★★★★',col:'#ff6a6a',w:1}];
+const MINF=[0,5,10,20,30,40];
+const MAXT=5;
 const NEED=5;
 const RB=['#e0443c','#f0932b','#f0c43a','#2f9b55','#2f7bd6','#7a4ac8'];
 const _sc={};
 function skinSprite(id,now){const s=SKINS.find(k=>k.id===id)||SKINS[0];let key=s.id,pal=s.pal;
   if(s.rainbow){const i=Math.floor((now||0)/220)%RB.length;key+=i;pal=Object.assign({},s.pal,{B:RB[i]})}
-  return _sc[key]||(_sc[key]=sprite(PENROWS,pal))}
+  return _sc[key]||(_sc[key]=sprite(s.rows||PENROWS,pal))}
 let OWNED=['def'],SKIN='def';
 try{const o=JSON.parse(ST.get('ice_skins','["def"]'));if(Array.isArray(o))OWNED=['def'].concat(o.filter(x=>x!=='def'&&SKINS.some(k=>k.id===x)))}catch(e){}
 SKIN=ST.get('ice_skin','def');if(!OWNED.includes(SKIN))SKIN='def';
-let GIVEN={1:false,2:false,3:false};
-try{GIVEN=Object.assign({1:false,2:false,3:false},JSON.parse(ST.get('ice_given','{}')))}catch(e){}
+let GIVEN={1:false,2:false,3:false,4:false};
+try{GIVEN=Object.assign({1:false,2:false,3:false,4:false},JSON.parse(ST.get('ice_given','{}')))}catch(e){}
 function saveSkins(){ST.set('ice_skins',JSON.stringify(OWNED));ST.set('ice_given',JSON.stringify(GIVEN))}
 function ownedIn(t){return SKINS.filter(k=>k.tier===t&&OWNED.includes(k.id)).length}
 function unownedIn(t){return SKINS.filter(k=>k.tier===t&&!OWNED.includes(k.id))}
@@ -330,9 +341,9 @@ function pump(){const k=Object.keys(PRE).find(x=>PRE[x].job);if(!k)return;if(ani
 function takePre(floor){const k=preKey(floor);const e=PRE[k];if(!e)return null;let r=e.rows;if(!r&&e.job){let x=null;while(!(x=stepJob(e.job,1000)));r=x}delete PRE[k];return r}
 let curRows=null;
 /* ===== 宝箱（視界が「ふつう」「狭い」のときだけ。10階より上で出る） ===== */
-const CHEST_MIN=10,CHEST_RATE=0.1; // 10階から・難易度（視界・ひび割れ）に関係なく、階を作るたびに10%
+const CHEST_MIN=5,CHEST_RATE=0.1; // 5階から・難易度（視界・ひび割れ）に関係なく、階を作るたびに10%
 function inB(x,y){return x>=0&&y>=0&&x<C&&y<R}
-function chestPossible(floor){return floor>=CHEST_MIN&&chestRemaining()}
+function chestPossible(floor){return floor>=CHEST_MIN&&chestAt(floor)}
 function bumpableRocks(rows){const gg=rows.map(r=>r.split(''));let x0=0,y0=0;gg.forEach((r,y)=>r.forEach((c,x)=>{if(c==='S'){x0=x;y0=y}}));
   const seen=new Set(),hits=new Set(),st=[[x0,y0,[]]];let n=0;
   while(st.length&&n++<4000){const [x,y,h]=st.pop();const k=x+','+y+','+h.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);
@@ -345,15 +356,15 @@ function bumpableRocks(rows){const gg=rows.map(r=>r.split(''));let x0=0,y0=0;gg.
 function addChest(rows,floor){if(!chestPossible(floor)||Math.random()>=CHEST_RATE)return rows;const c=bumpableRocks(rows);if(!c.length)return rows;
   const [x,y]=c[Math.floor(Math.random()*c.length)];const r=rows.slice();r[y]=r[y].substring(0,x)+'B'+r[y].substring(x+1);return r}
 function genLevel(floor){return addChest(takePre(floor)||genLevelBase(floor),floor)}
-function chestRemaining(){return SKINS.some(k=>k.tier>0&&!OWNED.includes(k.id))}
-function pickTierAvail(){const ts=[1,2,3,4].filter(t=>unownedIn(t).length);if(!ts.length)return 0;let r=Math.random()*ts.reduce((a,t)=>a+RARITY[t].w,0);for(const t of ts){r-=RARITY[t].w;if(r<0)return t}return ts[0]}
+function chestAt(floor){return SKINS.some(k=>k.tier>0&&MINF[k.tier]<=floor&&!OWNED.includes(k.id))}
+function pickTierAvail(floor){const ts=[];for(let t=1;t<=MAXT;t++)if(MINF[t]<=floor&&unownedIn(t).length)ts.push(t);if(!ts.length)return 0;let r=Math.random()*ts.reduce((a,t)=>a+RARITY[t].w,0);for(const t of ts){r-=RARITY[t].w;if(r<0)return t}return ts[0]}
 function pickUnowned(t){const u=unownedIn(t);return u[Math.floor(Math.random()*u.length)]}
-// 宝箱を1回開ける（持っていないスキンだけが出る）。同じランクが5つそろったら、1つ上のランクのスキンも1つ手に入る
-function rollChest(){const t=pickTierAvail();if(!t)return null;const s=pickUnowned(t);OWNED.push(s.id);const promos=[];let again=true;
-  while(again){again=false;for(let k=1;k<=3;k++){if(!GIVEN[k]&&ownedIn(k)>=NEED&&unownedIn(k+1).length){GIVEN[k]=true;const rw=pickUnowned(k+1);OWNED.push(rw.id);promos.push({from:k,s:rw});again=true}}}
+// 宝箱を1回開ける（持っていないスキンだけが出る。その階で出るランクだけ）。同じランクが5つそろったら、1つ上のランクのスキンも1つ手に入る
+function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s=pickUnowned(t);OWNED.push(s.id);const promos=[];let again=true;
+  while(again){again=false;for(let k=1;k<MAXT;k++){if(!GIVEN[k]&&ownedIn(k)>=NEED&&unownedIn(k+1).length){GIVEN[k]=true;const rw=pickUnowned(k+1);OWNED.push(rw.id);promos.push({from:k,s:rw});again=true}}}
   saveSkins();return{s,promos}}
 function openChest(x,y){if(g[y][x]!=='B')return;g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
-  const r=rollChest();if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">スキンは全部そろっている</span>',1800);saveRun();return}
+  const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
   const R1=RARITY[r.s.tier];let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';
   r.promos.forEach(p=>{const R2=RARITY[p.s.tier];msg+='<br><span style="font-size:13px;color:#ffd24a">⬆ '+RARITY[p.from].star+'が'+NEED+'つそろった！ <span style="color:'+R2.col+'">'+R2.star+'</span> 「'+p.s.name+'」</span>'});
   toast(msg,r.promos.length?3600:2400);renderSkins();paintIcon();saveRun()}
@@ -361,7 +372,7 @@ function paintIcon(){const c=$('#skinico').getContext('2d');c.imageSmoothingEnab
 function renderSkins(){const el=$('#skinpanel');
   el.innerHTML='<div class="skh">スキン '+(OWNED.length-1)+' / '+(SKINS.length-1)+'</div><div class="prg"></div><div class="skg"></div>';
   const pr=el.querySelector('.prg');
-  for(let t=1;t<=3;t++){const row=document.createElement('div');row.className='pr';const n=Math.min(ownedIn(t),NEED);
+  for(let t=1;t<MAXT;t++){const row=document.createElement('div');row.className='pr';const n=Math.min(ownedIn(t),NEED);
     let h='<span class="rs" style="color:'+RARITY[t].col+'">'+RARITY[t].star+'</span><span class="bxs">';
     for(let i=0;i<NEED;i++)h+='<i class="bx" style="'+(i<n?'background:'+RARITY[t].col+';border-color:'+RARITY[t].col:'')+'"></i>';
     h+='</span><span class="ar">→</span><span class="rs" style="color:'+RARITY[t+1].col+'">'+RARITY[t+1].star+(GIVEN[t]?' ✓':'')+'</span>';row.innerHTML=h;pr.appendChild(row)}
@@ -371,7 +382,7 @@ function renderSkins(){const el=$('#skinpanel');
     const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(skinSprite(s.id,0),0,0);
     if(!own){x.globalCompositeOperation='source-atop';x.fillStyle='#0a1a2a';x.fillRect(0,0,16,16)}
     b.appendChild(c);const l=document.createElement('span');l.textContent=own?s.name:'？？？';b.appendChild(l);
-    if(s.tier>0){const h=document.createElement('em');h.style.color=RARITY[s.tier].col;h.textContent=RARITY[s.tier].star;b.appendChild(h)}
+    if(s.tier>0){const h=document.createElement('em');h.style.color=RARITY[s.tier].col;h.textContent=RARITY[s.tier].star+(own?'':' '+MINF[s.tier]+'F〜');b.appendChild(h)}
     b.onclick=()=>{if(!own)return;SKIN=s.id;ST.set('ice_skin',SKIN);renderSkins();paintIcon()};gr.appendChild(b)})}
 /* ===== 設定は絵のボタンで選ぶ（文字でなく見た目で分かるように） ===== */
 function setIco(c){c.imageSmoothingEnabled=false}
@@ -455,7 +466,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261102-1920';
+const BUILD='20261102-1922';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
