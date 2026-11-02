@@ -29,6 +29,25 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 #skinbtn{background:var(--card);border:2px solid #27507a;border-radius:6px;padding:3px;width:46px;height:46px;cursor:pointer;flex:none}
 #skinbtn canvas{width:100%;height:100%;border:0;background:none;border-radius:0}
 #skinpanel{background:var(--card);border-radius:8px;padding:8px;margin:6px 0 8px}
+#gcard{position:relative;cursor:pointer}
+#gtx{position:absolute;top:3px;right:4px;font-size:10px;color:var(--ac);line-height:1}
+#gbr{position:absolute;left:6px;right:6px;bottom:3px;height:3px;background:#0a1a2a;border-radius:2px;display:block}
+#gbr u{display:block;height:3px;background:var(--ac);border-radius:2px;width:0;text-decoration:none}
+#goalpanel{background:var(--card);border-radius:8px;padding:8px 10px;margin:6px 0 8px;font-size:12px}
+#goalpanel .gh{display:flex;justify-content:space-between;color:var(--mu)}
+#goalpanel .gr{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+#goalpanel .gr em{font-style:normal;color:var(--ac);white-space:nowrap}
+#goalpanel .gbar{height:4px;background:#0a1a2a;border-radius:2px;margin-top:3px}
+#goalpanel .gbar u{display:block;height:4px;background:var(--ac);border-radius:2px;text-decoration:none}
+#goalpanel .gmap{position:relative;height:44px;margin:12px 8px 0}
+#goalpanel .tk{position:absolute;left:0;right:0;top:12px;height:4px;background:#27507a;border-radius:2px}
+#goalpanel .tk.on{right:auto;background:var(--ac)}
+#goalpanel .fg{position:absolute;top:3px;width:2px;height:22px;background:#4a6a8a}
+#goalpanel .fg::after{content:"";position:absolute;left:2px;top:0;width:9px;height:7px;background:inherit}
+#goalpanel .fg.on{background:var(--ac)}
+#goalpanel .fl2{position:absolute;top:28px;transform:translateX(-50%);font-weight:400;font-size:11px;color:var(--mu)}
+#goalpanel .me{position:absolute;top:8px;width:10px;height:10px;border-radius:50%;background:#eaf6ff;transform:translateX(-50%)}
+#goalpanel .bst{position:absolute;top:8px;width:8px;height:8px;border-radius:50%;border:2px solid var(--ac);background:var(--card);transform:translateX(-50%);box-sizing:content-box;margin-top:-2px}
 .skh{font-size:12px;color:var(--mu);margin-bottom:6px}
 .skg{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
 .sk{background:#0f2a44;border:2px solid #27507a;border-radius:6px;padding:4px 2px;color:var(--tx);font-family:inherit;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
@@ -98,11 +117,11 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 </style>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
-<div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><span class="hl">階</span><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><span class="hl">手数（最短）</span><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><span class="hl">落下</span><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><span class="hl">最高</span><b id="bs">1F</b></div></div>
+<div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><span class="hl">階</span><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><span class="hl">手数（最短）</span><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><canvas class="hi" data-i="crown" title="最高到達"></canvas><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
 <div class="btns"><button id="undo" class="act a-undo" title="1つ戻す" aria-label="1つ戻す"><canvas class="ai" data-i="undo"></canvas><span>1つ戻す</span></button><button id="reset" class="act a-reset" title="スタート地点に戻る（この階を最初から）" aria-label="スタート地点に戻る"><canvas class="ai" data-i="reset"></canvas><span class="lg">スタート地点に戻る</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
-<div class="opts" id="opts"></div><div class="row"><label>演出 <select id="fx"><option value="2">標準</option><option value="1">控えめ</option><option value="0">なし</option></select></label><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
+<div id="goalpanel" hidden></div><div class="opts" id="opts"></div><div class="row"><label>演出 <select id="fx"><option value="2">標準</option><option value="1">控えめ</option><option value="0">なし</option></select></label><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
 <div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。5階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ランクが高いほど出にくく、高い階でしか出ない。ペンギンの色違いは5階から、ペンギン以外のスキンは30階から。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る。ランク1・2は色違い、3は色違い＋光や炎などの演出、4は別の生き物、5はさらにゆれたり点滅したりする）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
@@ -717,16 +736,44 @@ function buildOpts(){
     box.appendChild(grp)});
   syncOpts()}
 function syncOpts(){document.querySelectorAll('#opts .opt').forEach(b=>b.classList.toggle('cur',$('#'+b.dataset.sel).value===b.dataset.v))}
+$('#gcard').onclick=()=>{const p=$('#goalpanel');p.hidden=!p.hidden;if(!p.hidden){renderGoals();p.scrollIntoView({block:'nearest',behavior:'smooth'})}};
+$('#gcard').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#gcard').click()}};
 $('#skinbtn').onclick=()=>{const p=$('#skinpanel');p.hidden=!p.hidden;if(!p.hidden)renderSkins()};
 
 function load(n,rows){
   fl=Math.max(1,n);curRows=rows||genLevel(fl);if(!rows)hintUsed=false;g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(shortest(g,sx,sy)||solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
-  if(fl>best){if(fl>1)recFx();best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();saveRun();prefetch(fl+1);if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1);
+  if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}draw_hud();buildChips();saveRun();prefetch(fl+1);if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1);
 }
 let reqLen=0;
-function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F'}
+/* ===== 目標（記録更新・次の節目・スキンの出始め）と称号 =====
+   上の段は高さを増やさず、最高のカードの中に「あと◯」と細い棒だけを足す。くわしい目標・称号・地図は、カードを押すと下のパネルに開く。
+   報酬は称号だけ（宝箱は出さない＝コンプリートが簡単にならないように）。節目は10階ごと。最高の階（best）から求めるので、新しい保存は要らない */
+const MS_STEP=10;
+const TITLES=['氷の見習い','雪原の旅人','氷壁の登り手','凍てつく探検家','白銀の冒険者','氷塔の主','吹雪の覇者','極寒の賢者','氷の王者','氷塔の伝説'];
+function titleOf(m){const i=m/MS_STEP-1;return i<TITLES.length?TITLES[i]:'氷塔の伝説 '+(i-TITLES.length+2)+'段'}
+function myTitle(){const m=Math.floor(best/MS_STEP)*MS_STEP;return m>=MS_STEP?titleOf(m):null}
+function goalList(){const L=[{to:best+1,txt:'記録更新　'+(best+1)+'F'}];
+  const nm=(Math.floor(best/MS_STEP)+1)*MS_STEP,sk={};
+  for(let t=1;t<=topTier();t++)if(MINF[t]>best&&unownedIn(t).length)(sk[MINF[t]]=sk[MINF[t]]||[]).push(RARITY[t].star);
+  const nxs=Object.keys(sk).map(Number).sort((a,b)=>a-b)[0];
+  L.push({to:nm,txt:nm+'F　称号「'+titleOf(nm)+'」'+(sk[nm]?'・'+sk[nm].join(' ')+' が出始める':'')});
+  if(nxs!=null&&nxs!==nm)L.push({to:nxs,txt:nxs+'F　'+sk[nxs].join(' ')+' が出始める'});
+  return L}
+function goalCard(){const gl=goalList(),near=gl.reduce((a,b)=>b.to<a.to?b:a);
+  $('#gtx').textContent='あと'+Math.max(1,near.to-fl);$('#gbr').firstChild.style.width=Math.min(100,Math.round(fl/near.to*100))+'%';
+  if(!$('#goalpanel').hidden)renderGoals()}
+function renderGoals(){const el=$('#goalpanel'),gl=goalList(),t=myTitle();
+  let h='<div class="gh"><span>目標</span><span>称号　'+(t||'まだない')+'</span></div>';
+  gl.forEach(q=>{h+='<div class="gr"><span>'+q.txt+'</span><em>あと'+Math.max(1,q.to-fl)+'階</em></div><div class="gbar"><u style="width:'+Math.min(100,Math.round(fl/q.to*100))+'%"></u></div>'});
+  const nm=(Math.floor(best/MS_STEP)+1)*MS_STEP,lo=Math.max(0,nm-3*MS_STEP),hi=nm+MS_STEP,pos=f=>Math.max(0,Math.min(100,(f-lo)/(hi-lo)*100));
+  h+='<div class="gmap"><div class="tk"></div><div class="tk on" style="width:'+pos(fl)+'%"></div>';
+  for(let f=lo;f<=hi;f+=MS_STEP){if(f<MS_STEP)continue;h+='<i class="fg'+(f<=best?' on':'')+'" style="left:'+pos(f)+'%"></i><b class="fl2" style="left:'+pos(f)+'%">'+f+'F</b>'}
+  h+='<i class="bst" style="left:'+pos(best)+'%"></i><i class="me" style="left:'+pos(fl)+'%"></i></div>';el.innerHTML=h}
+function milestone(f){toast('<span style="color:var(--ac);font-size:17px">'+f+'F　節目</span><br><span style="font-size:13px">称号「'+titleOf(f)+'」を手に入れた</span>',3000);
+  if(FXLV>0)ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>1?36:14,7)})}
+function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
 function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
 function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
 function act(d){
@@ -788,7 +835,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0301';
+const BUILD='20261103-0326';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
