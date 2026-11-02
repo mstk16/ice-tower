@@ -34,7 +34,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 <div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option><option value="1">狭い（3×3）</option></select></label><label>視界の形 <select id="vs"><option value="sq">四角（周囲すべて）</option><option value="dm">ひし形（縦横の合計）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。階は毎回ランダムで、階段までの進み方は1通りだけ。5階上がるごとに、階段までの必要な操作回数が1回ずつ増える（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5・狭い3×3）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1手戻す」か「この階を最初から」。階は毎回ランダムで、階段までの進み方は1通りだけ。5階・10階・15階…と5の倍数の階に着くたびに、階段までの必要な操作回数が1回増える。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5・狭い3×3）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -167,9 +167,10 @@ function genOne(floor,seed){const r=mkRng(seed);const rockP=0.2+Math.min(floor,1
   const [sx,sy]=free();g[sy][sx]='S';const [gx,gy]=free();g[gy][gx]='G';
   for(let i=0;i<crackN;i++){const [x,y]=free();if(g[y][x]==='.')g[y][x]='c'}
   return{g,sx,sy}}
-const STEP=5; // この階数ごとに、階段までの必要な操作回数が1回ずつ増える
-function targetLen(floor){return 3+Math.floor((Math.max(1,floor)-1)/STEP)}
-function genLevel(floor){const f=Math.min(floor,10),want=targetLen(floor);const t0=performance.now();let near=null,nd=99;
+const STEP=5;
+function targetLen(floor){return 3+Math.floor(Math.max(1,floor)/STEP)} // 5の倍数の階（5F・10F…）に着くたびに基準が1つ増える
+function pickWant(floor){const b=targetLen(floor);return(floor%STEP!==0&&Math.random()<0.25)?Math.max(2,b-1):b} // 倍数の階以外では、たまに1回少ない階
+function genLevel(floor){const f=Math.min(floor,10),want=pickWant(floor);const t0=performance.now();let near=null,nd=99;
   while(performance.now()-t0<4000){const L=genOne(f,(Math.random()*4294967296)>>>0);const s=solveCount(L.g,L.sx,L.sy);
     if(s.count!==1||s.nodes>=6000)continue;if(f>=2&&!NOCR&&crackUsed(L.g,L.sx,L.sy,s.best)<1)continue;
     const d=Math.abs(s.best.length-want);if(d===0)return L.g.map(r=>r.join(''));if(d<nd){nd=d;near=L.g.map(r=>r.join(''))}}
