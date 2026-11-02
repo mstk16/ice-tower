@@ -178,7 +178,7 @@ const RB=['#e0443c','#f0932b','#f0c43a','#2f9b55','#2f7bd6','#7a4ac8'];
    レア度が高いほど、見た目・動き・演出をはっきり豪華にする（今後スキンを増やすときも同じ）
    ★4まで : 色違い／生き物の違い＋ときどき小さく跳ねる
    ★5     : 生き物＋ずっと続く動き＋その子らしい演出が1つ（ロボット・おばけ・くらげ・ようせい・ドラゴン）
-   ★6     : ★5のすべて＋体の輪郭の光＋まわりのオーラ＋舞う・まわる粒＋体の中の動き（全部つける）
+   ★6     : ★5のすべて＋体の輪郭の光＋まわりのオーラ＋舞う・まわる粒＋体の中の動き（全部つける）。★5までを全部そろえるまで、一覧にも宝箱にも出さない
    絵は左半分（8文字）だけ書いて mir() で左右に写す。動く絵は fr（コマの配列）と fp（1コマの長さms）で持つ。 */
 const NS=[];
 const mir=h=>h.map(s=>s+[...s].reverse().join(''));
@@ -347,6 +347,14 @@ try{GIVEN=Object.assign({1:false,2:false,3:false,4:false,5:false},JSON.parse(ST.
 function saveSkins(){ST.set('ice_skins',JSON.stringify(OWNED));ST.set('ice_given',JSON.stringify(GIVEN))}
 function ownedIn(t){return SKINS.filter(k=>k.tier===t&&OWNED.includes(k.id)).length}
 function unownedIn(t){return SKINS.filter(k=>k.tier===t&&!OWNED.includes(k.id))}
+// ★6 は、★5までを全部そろえるまで、一覧にも宝箱にも出さない（存在を知らせない）。そろったら解放（ice_u6 に保存）。★5から★6への「5つそろえると」の昇格はしない
+const PROMO_MAX=5;
+let U6=ST.get('ice_u6','0')==='1';
+function allBelow6(){return SKINS.every(k=>k.tier>=6||OWNED.includes(k.id))}
+function topTier(){return U6?6:5}
+function shownSkins(){return SKINS.filter(k=>k.tier<=topTier())}
+function checkU6(){if(U6)return false;if(OWNED.some(id=>skinTier(id)>=6)||allBelow6()){U6=true;ST.set('ice_u6','1');return true}return false}
+checkU6(); // 前の版で★6を持っている人・すでにそろっている人は、メッセージなしで解放済みにする
 
 const CHEST=sprite(["................","................","...KKKKKKKKKK...","..KLLLLLLLLLLK..",".KLWWWWWWWWWWDK.",".KGGGGGGGGGGGGK.",".KLWWWWWGGWWWDK.",".KLWWWWWGgWWWDK.",".KGGGGGGGGGGGGK.",".KLWWWWWWWWWWDK.",".KWWWWWWWWWWWDK.",".KWWWWWWWWWWDDK.",".KDDDDDDDDDDDDK.","..KKKKKKKKKKKK..","................","................"],{K:'#2a1a0c',L:'#c98a44',W:'#a8682c',D:'#7a4a1c',G:'#ffd24a',g:'#c9981a'});
 const CHESTO=sprite(["................","................","..KKKKKKKKKKKK..",".KLLLLLLLLLLLLK.",".KLWWWWWWWWWWDK.","..KDDDDDDDDDDK..",".KIIIIIIIIIIIIK.",".KIIIIIIgIIIIIK.",".KGGGGGGGGGGGGK.",".KLWWWWWWWWWWDK.",".KWWWWWWWWWWWDK.",".KWWWWWWWWWWDDK.",".KDDDDDDDDDDDDK.","..KKKKKKKKKKKK..","................","................"],{K:'#2a1a0c',L:'#c98a44',W:'#a8682c',D:'#7a4a1c',G:'#ffd24a',g:'#fff3a0',I:'#1a0f06'});
@@ -628,32 +636,34 @@ function bumpableRocks(rows){const gg=rows.map(r=>r.split(''));let x0=0,y0=0;gg.
 function addChest(rows,floor){if(!chestPossible(floor)||Math.random()>=CHEST_RATE)return rows;const c=bumpableRocks(rows);if(!c.length)return rows;
   const [x,y]=c[Math.floor(Math.random()*c.length)];const r=rows.slice();r[y]=r[y].substring(0,x)+'B'+r[y].substring(x+1);return r}
 function genLevel(floor){const skip=noChestNext;noChestNext=false;const rows=takePre(floor)||genLevelQuick(floor);return skip?rows:addChest(rows,floor)} // ヒントを使ってゴールした次の階は、宝箱の抽選をしない
-function chestAt(floor){return SKINS.some(k=>k.tier>0&&MINF[k.tier]<=floor&&!OWNED.includes(k.id))}
-function pickTierAvail(floor){const ts=[];for(let t=1;t<=MAXT;t++)if(MINF[t]<=floor&&unownedIn(t).length)ts.push(t);if(!ts.length)return 0;let r=Math.random()*ts.reduce((a,t)=>a+RARITY[t].w,0);for(const t of ts){r-=RARITY[t].w;if(r<0)return t}return ts[0]}
+function chestAt(floor){return SKINS.some(k=>k.tier>0&&k.tier<=topTier()&&MINF[k.tier]<=floor&&!OWNED.includes(k.id))}
+function pickTierAvail(floor){const ts=[];for(let t=1;t<=topTier();t++)if(MINF[t]<=floor&&unownedIn(t).length)ts.push(t);if(!ts.length)return 0;let r=Math.random()*ts.reduce((a,t)=>a+RARITY[t].w,0);for(const t of ts){r-=RARITY[t].w;if(r<0)return t}return ts[0]}
 function pickUnowned(t){const u=unownedIn(t);return u[Math.floor(Math.random()*u.length)]}
 // 宝箱を1回開ける（持っていないスキンだけが出る。その階で出るランクだけ）。同じランクが5つそろったら、1つ上のランクのスキンも1つ手に入る
 function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s=pickUnowned(t);OWNED.push(s.id);const promos=[];let again=true;
-  while(again){again=false;for(let k=1;k<MAXT;k++){if(!GIVEN[k]&&ownedIn(k)>=NEED&&unownedIn(k+1).length){GIVEN[k]=true;const rw=pickUnowned(k+1);OWNED.push(rw.id);promos.push({from:k,s:rw});again=true}}}
+  while(again){again=false;for(let k=1;k<PROMO_MAX;k++){if(!GIVEN[k]&&ownedIn(k)>=NEED&&unownedIn(k+1).length){GIVEN[k]=true;const rw=pickUnowned(k+1);OWNED.push(rw.id);promos.push({from:k,s:rw});again=true}}}
   saveSkins();return{s,promos}}
 function openChest(x,y){if(g[y][x]!=='B')return;g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
   const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
   const R1=RARITY[r.s.tier];ovAdd({k:'chest',t:performance.now(),cx:x*16+8,cy:y*16+8,id:r.s.id,col:R1.col,l:r.s.tier});r.promos.forEach((p,i)=>ovAdd({k:'promo',t:performance.now()+700+i*1300,id:p.s.id,col:RARITY[p.s.tier].col}));let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';
   r.promos.forEach(p=>{const R2=RARITY[p.s.tier];msg+='<br><span style="font-size:13px;color:#ffd24a">⬆ '+RARITY[p.from].star+'が'+NEED+'つそろった！ <span style="color:'+R2.col+'">'+R2.star+'</span> 「'+p.s.name+'」</span>'});
-  toast(msg,r.promos.length?3600:2400);renderSkins();paintIcon();saveRun()}
+  const unlocked=checkU6();
+  if(unlocked){msg+='<br><span style="font-size:14px;color:'+RARITY[6].col+'">'+RARITY[5].star+'まで、ぜんぶそろった！<br>'+RARITY[6].star+' 「'+RARITY[6].name+'」が解放された<br><span style="font-size:12px;color:#9bbbd6">'+MINF[6]+'階から、宝箱に出るよ</span></span>';ovAdd({k:'win',t:performance.now()+400,cx:56,cy:56,conf:mkConf(FXLV>0?60:24,7)})}
+  toast(msg,unlocked?6500:(r.promos.length?3600:2400));renderSkins();paintIcon();saveRun()}
 function paintIcon(){const c=$('#skinico').getContext('2d');drawSkinCard(c,SKIN,performance.now())}
 let PANEL_ANIM=[];
 // スキンの絵を1枚描く（動き・演出つき）。一覧のカードと右上のアイコンで共通
 function drawSkinCard(x,id,now){x.imageSmoothingEnabled=false;x.clearRect(0,0,16,16);const mo=skinMotion(id,now);x.save();x.globalAlpha=mo.a;x.drawImage(skinFrame(id,now),mo.dx,mo.dy);x.restore();if(skinFx(id)==='emerald'){for(let i=0;i<3;i++){const gy=((now/55+i*7)%20)-3,gx=8+Math.sin(now/500+i*1.7)*6+(i-1)*3,c=i%2?'#2fd08a':'#16b07a';x.fillStyle=c;x.fillRect(Math.round(gx),Math.round(gy),1,1);x.fillRect(Math.round(gx)+1,Math.round(gy)+1,1,1);x.fillStyle='#0f7a52';x.fillRect(Math.round(gx)+1,Math.round(gy),1,1)}}}
 setInterval(()=>{const p=document.getElementById('skinpanel');if(!p||p.hidden||!PANEL_ANIM.length)return;const n=performance.now();PANEL_ANIM.forEach(e=>drawSkinCard(e.x,e.id,n))},70);
 function renderSkins(){const el=$('#skinpanel');PANEL_ANIM=[];
-  el.innerHTML='<div class="skh">スキン '+(OWNED.length-1)+' / '+(SKINS.length-1)+'</div><div class="prg"></div><div class="skg"></div>';
+  el.innerHTML='<div class="skh">スキン '+(OWNED.filter(id=>skinTier(id)<=topTier()).length-1)+' / '+(shownSkins().length-1)+'</div><div class="prg"></div><div class="skg"></div>';
   const pr=el.querySelector('.prg');
-  for(let t=1;t<MAXT;t++){const row=document.createElement('div');row.className='pr';const n=Math.min(ownedIn(t),NEED);
+  for(let t=1;t<PROMO_MAX;t++){const row=document.createElement('div');row.className='pr';const n=Math.min(ownedIn(t),NEED);
     let h='<span class="rs" style="color:'+RARITY[t].col+'">'+RARITY[t].star+'</span><span class="bxs">';
     for(let i=0;i<NEED;i++)h+='<i class="bx" style="'+(i<n?'background:'+RARITY[t].col+';border-color:'+RARITY[t].col:'')+'"></i>';
     h+='</span><span class="ar">→</span><span class="rs" style="color:'+RARITY[t+1].col+'">'+RARITY[t+1].star+(GIVEN[t]?' ✓':'')+'</span>';row.innerHTML=h;pr.appendChild(row)}
   const gr=el.querySelector('.skg');
-  SKINS.forEach(s=>{const own=OWNED.includes(s.id);const b=document.createElement('button');b.type='button';b.className='sk'+(s.id===SKIN?' cur':'')+(own?'':' lock');
+  shownSkins().forEach(s=>{const own=OWNED.includes(s.id);const b=document.createElement('button');b.type='button';b.className='sk'+(s.id===SKIN?' cur':'')+(own?'':' lock');
     if(s.tier>0&&s.id!==SKIN)b.style.borderColor=RARITY[s.tier].col;
     const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');drawSkinCard(x,s.id,0);if(own&&skinAnimated(s.id))PANEL_ANIM.push({x:x,id:s.id});
     if(!own){x.globalCompositeOperation='source-atop';x.fillStyle='#0a1a2a';x.fillRect(0,0,16,16)}
@@ -778,7 +788,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0251';
+const BUILD='20261103-0301';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
