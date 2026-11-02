@@ -55,13 +55,16 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .btns .act:disabled{opacity:.35;cursor:default;filter:none;transform:none}
 .dpad button canvas{width:30px;height:30px;border:0;background:none;display:block;margin:auto;border-radius:0}
 .sk em canvas{width:16px;height:16px;border:0;background:none;display:inline-block;vertical-align:middle;border-radius:0}
+
+.btns .a-home{background:#3a1a22;border-color:#c04a5a;flex:.8}
+.btns .a-home.arm{background:#1f6b3a;border-color:#7dffa0}
 </style></head><body>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
 <div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
 <div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><b id="fa">0</b></div><div><canvas class="hi" data-i="crown" title="最高到達"></canvas><b id="bs">1F</b></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
-<div class="btns"><button id="undo" class="act a-undo" title="1手戻す" aria-label="1手戻す"><canvas class="ai" data-i="undo"></canvas></button><button id="reset" class="act a-reset" title="この階を最初からやり直す" aria-label="この階を最初からやり直す"><canvas class="ai" data-i="reset"></canvas></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas></button></div>
+<div class="btns"><button id="undo" class="act a-undo" title="1手戻す" aria-label="1手戻す"><canvas class="ai" data-i="undo"></canvas></button><button id="reset" class="act a-reset" title="この階を最初からやり直す" aria-label="この階を最初からやり直す"><canvas class="ai" data-i="reset"></canvas></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas></button></div>
 <div class="opts" id="opts"></div><div class="row"><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
@@ -271,7 +274,7 @@ function openChest(x,y){if(g[y][x]!=='B')return;g[y][x]='b';curRows[y]=curRows[y
   const pool=SKINS.filter(k=>k.tier>0&&TIERFLOOR[k.tier]<=fl&&!OWNED.includes(k.id));
   if(!pool.length){toast('📦 宝箱は空っぽだった',1300);return}
   const s=pool[Math.floor(Math.random()*pool.length)];OWNED.push(s.id);ST.set('ice_skins',JSON.stringify(OWNED));
-  toast('🎁 スキン「'+s.name+'」をゲット！<br><span style="font-size:12px;color:#9bbbd6">右上のペンギンのアイコンから着替えられる</span>',2400);renderSkins();paintIcon()}
+  toast('🎁 スキン「'+s.name+'」をゲット！<br><span style="font-size:12px;color:#9bbbd6">右上のペンギンのアイコンから着替えられる</span>',2400);renderSkins();paintIcon();saveRun()}
 function paintIcon(){const c=$('#skinico').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,16,16);c.drawImage(skinSprite(SKIN,performance.now()),0,0)}
 function renderSkins(){const el=$('#skinpanel');el.innerHTML='<div class="skh">スキン '+OWNED.length+' / '+SKINS.length+'</div><div class="skg"></div>';const gr=el.querySelector('.skg');
   SKINS.forEach(s=>{const own=OWNED.includes(s.id);const b=document.createElement('button');b.type='button';b.className='sk'+(s.id===SKIN?' cur':'')+(own?'':' lock');
@@ -303,6 +306,8 @@ const ACT_ICON={
  reset:()=>{ringPx(9,10,5.5,20,305,2,'#ffe3a8');const T3=[[15.5,8],[10,6],[14,2.5]];for(let y=0;y<18;y++)for(let x=0;x<18;x++){const px_=x+.5,py_=y+.5;const sg=(a,b,c)=>(a[0]-c[0])*(b[1]-c[1])-(b[0]-c[0])*(a[1]-c[1]);const d1=sg([px_,py_],T3[0],T3[1]),d2=sg([px_,py_],T3[1],T3[2]),d3=sg([px_,py_],T3[2],T3[0]);if(!((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0)))P(x,y,1,1,'#ffe3a8')}P(8,8,1,5,'#fff');P(9,8,3,2,'#e0443c')},
  hint:()=>{for(let y=0;y<18;y++)for(let x=0;x<18;x++){if(Math.hypot(x-9,y-7.5)<=4.6)P(x,y,1,1,'#ffd24a')}P(7,5,2,2,'#fff6c8');P(7,12,5,1,'#9bbbd6');P(7,13,5,1,'#6d93ad');P(8,14,3,1,'#6d93ad');P(8,0,1,2,'#ffd24a');P(1,6,2,1,'#ffd24a');P(15,6,2,1,'#ffd24a');P(3,1,1,1,'#ffd24a');P(14,1,1,1,'#ffd24a')}
 };
+ACT_ICON.home=()=>{for(let i=0;i<6;i++)P(8-i,3+i,2*i+2,1,'#ffb3bd');P(4,9,10,6,'#ffb3bd');P(8,11,3,4,'#7a1f2c');P(13,3,2,4,'#ffb3bd')};
+ACT_ICON.homeok=()=>{const pts=[[3,9],[4,10],[5,11],[6,12],[7,11],[8,10],[9,9],[10,8],[11,7],[12,6],[13,5]];pts.forEach(a=>P(a[0],a[1],2,2,'#caffd6'))};
 function arrowIcon(a){cx.save();cx.translate(8,8);cx.rotate(a*Math.PI/2);cx.translate(-8,-8);P(7,2,2,1,'#eaf6ff');P(6,3,4,1,'#eaf6ff');P(5,4,6,1,'#eaf6ff');P(4,5,8,1,'#eaf6ff');P(6,6,4,8,'#eaf6ff');cx.restore()}
 function buildIcons(){
   document.querySelectorAll('canvas.hi').forEach(c=>iconOn(c,16,16,HUD_ICON[c.dataset.i]));
@@ -329,7 +334,7 @@ function load(n,rows){
   fl=Math.max(1,n);curRows=rows||genLevel(fl);g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
-  if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();
+  if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud();buildChips();saveRun();
 }
 let reqLen=0;
 function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves+' / '+reqLen;$('#fa').textContent=fall;$('#bs').textContent=best+'F'}
@@ -353,6 +358,13 @@ function finish(){
 }
 $('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
 $('#reset').onclick=()=>{if(!anim)load(fl,curRows)};
+/* ===== 続きから遊べるように、今の階と階の形・落下回数を保存する（スキン・設定・最高到達は変更のたびに保存済み） ===== */
+function saveRun(){ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall}))}
+function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x==='string'&&x.length===C&&/^[.sS#oBbchGx]+$/.test(x))&&r.join('').includes('S')&&r.join('').includes('G')}
+let homeArm=false,homeT=0;
+function homeDisarm(){homeArm=false;clearTimeout(homeT);const b=$('#home');b.classList.remove('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.home)}
+$('#home').onclick=()=>{if(anim)return;if(!homeArm){homeArm=true;const b=$('#home');b.classList.add('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.homeok);toast('もう一度押すと、1階からやり直す',1800);homeT=setTimeout(homeDisarm,3000);return}homeDisarm();fall=0;load(1)};
+
 $('#hint').onclick=()=>{if(anim)return;const d=findSol(S.x,S.y,S.holes);if(d===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=d;hintT=performance.now()};
 function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList.toggle('on',v==='dpad')}
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
@@ -401,6 +413,9 @@ function frame(now){
 (function(){const items=[['.','氷（止まれない）'],['s','石の床（止まる）'],['c','ひび割れ（通ると穴）'],['hole','穴（落ちる）'],['o','障害物（氷の塊）'],['G','階段（上の階へ）']];
   $('#leg').innerHTML=items.map(it=>`<span><canvas width="16" height="16" data-k="${it[0]}"></canvas>${it[1]}</span>`).join('');
   document.querySelectorAll('#leg canvas').forEach(c=>{cx=c.getContext('2d');cx.imageSmoothingEnabled=false;tile(c.dataset.k,0,0)});cx=MAIN})();
-buildIcons();buildOpts();paintIcon();renderSkins();load(1);requestAnimationFrame(frame);
+buildIcons();buildOpts();paintIcon();renderSkins();
+{let run=null;try{run=JSON.parse(ST.get('ice_run','null'))}catch(e){}
+ if(run&&run.fl>=1){fall=+run.fall||0;load(run.fl,((run.nc?1:0)===(NOCR?1:0)&&validRows(run.rows))?run.rows:undefined)}else load(1)}
+requestAnimationFrame(frame);
 </script>
 </body></html>
