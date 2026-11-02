@@ -88,7 +88,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .opt canvas{width:34px;height:34px;flex:none}
 .opt span{font-size:10px;line-height:1.1;color:var(--mu);white-space:nowrap}
 .opt.cur span{color:var(--ac)}
-.bar .hl{font-size:10px;color:var(--mu);line-height:1}
+.bar .hl{font-size:11px;color:var(--mu);line-height:1}
 
 .ver{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--mu)}
 .vbtn{background:var(--card);color:var(--tx);border:2px solid #27507a;border-radius:8px;padding:8px 12px;font-family:inherit;font-size:12px;cursor:pointer}
@@ -116,8 +116,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 @media (prefers-reduced-motion:reduce){#skinbtn.pulse2{animation:none}}
 </style>
 <div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
-<div class="sub">スワイプで方向を決める。<b>氷は止まれない</b>（壁・障害物にぶつかるか、氷が終わるまで滑る）。ひび割れは<b>通り過ぎたら穴になる</b>（最初から開いている穴はない）。穴に落ちると1つ下の階へ。<b>階段</b>で上の階へ、進み方は各階1通りだけ。</div>
-<div class="bar"><div class="fl"><canvas class="hi" data-i="stairs" title="今の階"></canvas><span class="hl">階</span><b id="fl">1F</b></div><div><canvas class="hi" data-i="steps" title="手数（今の手数 / 最短の手数）"></canvas><span class="hl">手数（最短）</span><b id="mv">0</b></div><div><canvas class="hi" data-i="hole" title="穴に落ちた回数"></canvas><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><canvas class="hi" data-i="crown" title="最高到達"></canvas><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
+<div class="bar"><div class="fl" title="今の階"><span class="hl">階</span><b id="fl">1F</b></div><div title="手数（今の手数 / 最短の手数）"><span class="hl">手数（最短）</span><b id="mv">0</b></div><div title="穴に落ちた回数"><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
 <div class="btns"><button id="undo" class="act a-undo" title="1つ戻す" aria-label="1つ戻す"><canvas class="ai" data-i="undo"></canvas><span>1つ戻す</span></button><button id="reset" class="act a-reset" title="スタート地点に戻る（この階を最初から）" aria-label="スタート地点に戻る"><canvas class="ai" data-i="reset"></canvas><span class="lg">スタート地点に戻る</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
@@ -835,7 +834,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0326';
+const BUILD='20261103-0329';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
