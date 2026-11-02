@@ -105,7 +105,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 <div class="opts" id="opts"></div><div class="row"><label>演出 <select id="fx"><option value="2">標準</option><option value="1">控えめ</option><option value="0">なし</option></select></label><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
-<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。5階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ランクが高いほど出にくく、高い階でしか出ない。ペンギンの色違いは5階から、ペンギン以外のスキンは30階から。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
+<div class="note">あそびかた: 盤面を上下左右にスワイプ（または十字ボタン・矢印キー）。氷は止まれずに滑り、氷の塊にぶつかるか石の床に着くと止まる。ひび割れの床は通ったあと穴になるので、2度は通れない。階段に着くと上の階へ。穴に落ちると1つ下の階。間違えたら「1つ戻す」か「スタート地点に戻る」。5階以上では、10回に1回ほど宝箱が出る（難易度の設定に関係なく）。ぶつかるとスキンが手に入り、右上のペンギンのアイコンから着替えられる（スキンにはレア度があり、ランクが高いほど出にくく、高い階でしか出ない。ペンギンの色違いは5階から、ペンギン以外のスキンは30階から。同じスキンは出ない。同じランクを5つ集めると、1つ上のランクのスキンが手に入る。ランク1・2は色違い、3は色違い＋光や炎などの演出、4は別の生き物、5はさらにゆれたり点滅したりする）。階は毎回ランダムで、階段までの進み方は1通りだけ（手数が少ない階でも、開始と階段は盤面の反対側に置いて、盤面を広く使う）。1〜4階は階段まで最短4手。5階・10階・15階…と5の倍数の階に着くたびに、必要な操作回数が1〜2回増える（増える幅は階ごとに違う）。倍数の階以外では、たまに1回少なくて済む階もある（手数の欄は「今の手数 / 最短の手数」）。「ひび割れの床」を「なし」にすると、穴も落下もない氷と岩だけの階になる（最高到達は設定ごとに記録）。「視界」を選ぶと、自分の周りだけ（広い7×7・ふつう5×5）しか見えなくなる（最高到達は視界の設定ごとに記録）。</div><div class="ver"><button id="updbtn" type="button" class="vbtn">↻ 最新版を確認</button><span id="vtxt"></span></div><div id="upd" hidden><span>新しい版があります</span><button id="updgo" type="button">更新する</button><button id="updlater" type="button">あとで</button></div>
 <script>
 const LEVELS=[{"floor":1,"rows":[".o...o.","S.o.o..","o.o....","o...o.o",".s..G.o",".....oo","......o",".o...o."],"sol":"121"},{"floor":2,"rows":[".os..s.","o.s...o","S.ooo.o",".o.s.oo",".oco.oo",".c.....","o..osG.","..o.o.."],"sol":"21230"},{"floor":3,"rows":["o......","os.s..c","..s.soS","oooGo..",".o..s.c","oo.o...","...s.os","o......"],"sol":"03212"},{"floor":4,"rows":["sS..oo.","ososso.","oso.o..","o.Gco..",".c....s",".o....s",".co.o..",".o..o.."],"sol":"2221230"},{"floor":5,"rows":[".o.....",".ooG.o.","...s..o","S......","..o.ooc",".o...c.","oc.s.o.",".s....."],"sol":"1230100"},{"floor":6,"rows":[".o..oos","..ooosc","...G...","..o.o.o","soS...c","..o.oc.","o..o.co",".oo..s."],"sol":"1230123"},{"floor":7,"rows":["o.G..s.","s.oo..o","so..o..","oo..oos","c..c.sc",".os.o..",".oooo.o","...S..."],"sol":"301100303"},{"floor":8,"rows":["S..s...","o.o.ss.","Gs.o.o.","s.o.c..","o...c..","osos...","...c.oc","..o.ooc"],"sol":"1212321003"},{"floor":9,"rows":["ooo.c.o",".oo.coo","o..o..c","S...c..","..s.o.o","oso.o..","o.cooo.",".oG...o"],"sol":"21032212"},{"floor":10,"rows":["oo..o..","os.cs..","o.soo..","cc.....","....oSo","...s.oc","ooGsoo.","...o.c."],"sol":"01232123"}];
 const C=7,R=8,T=16,W=112,H=128,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -152,20 +152,20 @@ const SKINS=[
  {id:'blue',name:'あお',tier:2,pal:{'K':'#0a1a3a','B':'#2a5fd0','W':'#eef3ff','O':'#ffd24a'}},
  {id:'lime',name:'きみどり',tier:2,pal:{'K':'#1d2b0a','B':'#8fd13a','W':'#f6ffe8','O':'#ff8a3a'}},
  {id:'brown',name:'ちゃいろ',tier:2,pal:{'K':'#2a1608','B':'#8a5a2b','W':'#fff3e3','O':'#ffd24a'}},
- {id:'gold',name:'おうごん',tier:3,shine:true,pal:{'K':'#4a3200','B':'#e6b422','W':'#fff6cc','O':'#c0392b'}},
- {id:'black',name:'くろ',tier:3,pal:{'K':'#000000','B':'#1a1a22','W':'#9aa0b0','O':'#ff4a4a'}},
- {id:'silver',name:'ぎん',tier:3,pal:{'K':'#2a2f3a','B':'#c9d3df','W':'#ffffff','O':'#ff7a1f'}},
- {id:'ruby',name:'ふかあか',tier:3,pal:{'K':'#2b0510','B':'#d11f4f','W':'#ffe9ef','O':'#ffd24a'}},
- {id:'emerald',name:'ふかみどり',tier:3,pal:{'K':'#052b1a','B':'#16b07a','W':'#e8fff5','O':'#ffd24a'}},
+ {id:'gold',name:'おうごん',tier:3,fx:'gold',pal:{'K':'#4a3200','B':'#e6b422','W':'#fff6cc','O':'#c0392b'}},
+ {id:'black',name:'くろ',tier:3,fx:'black',pal:{'K':'#000000','B':'#1a1a22','W':'#9aa0b0','O':'#ff4a4a'}},
+ {id:'silver',name:'ぎん',tier:3,fx:'silver',pal:{'K':'#2a2f3a','B':'#c9d3df','W':'#ffffff','O':'#ff7a1f'}},
+ {id:'ruby',name:'ふかあか',tier:3,fx:'ruby',pal:{'K':'#2b0510','B':'#d11f4f','W':'#ffe9ef','O':'#ffd24a'}},
+ {id:'emerald',name:'ふかみどり',tier:3,fx:'emerald',pal:{'K':'#052b1a','B':'#16b07a','W':'#e8fff5','O':'#ffd24a'}},
  {id:'rainbow',name:'にじいろ',tier:3,rainbow:true,pal:{'K':'#14142b','B':'#e0443c','W':'#f4f8ff','O':'#ffa21f'}},
- {id:'galaxy',name:'こん',tier:3,pal:{'K':'#0a0a2a','B':'#2a1a6a','W':'#cfd8ff','O':'#ff7ad9'}},
+ {id:'galaxy',name:'こん',tier:3,fx:'galaxy',pal:{'K':'#0a0a2a','B':'#2a1a6a','W':'#cfd8ff','O':'#ff7ad9'}},
  {id:'snow',name:'ゆきだるま',tier:4,rows:["................",".....KBBBBK.....",".....KBBBBK.....","....KBBBBBBK....","...KWWWWWWWWK...","...KWBWWWWBWK...","...KWWWOOWWWK...","...KSWWWWWWSK...","..KRRRRRRRRRRK..","...KWWWWWWWWK...","..KWWWBWWWWWWK..","..KWWWWWWWWWWK..","..KWWWBWWWWWWK..","..KSWWWWWWWWSK..","...KKSSSSSSKK...","................"],pal:{'K':'#2a3a55','W':'#f4f9ff','S':'#c9dcf0','O':'#ff8a2a','B':'#1a1a2a','R':'#d6384a'}},
  {id:'seal',name:'あざらし',tier:4,rows:["................","................","......KKKK......",".....KGGGGK.....","....KGGGGGGK....","....KGEGGEGK....","....KGGNNGGK....","....KGWWWWGK....","...KGGGWWGGGK...","..KGGGGGGGGGGK..",".KGGLGGGGGGGGGK.",".KGGGGGGGGGGDDK.",".KGGGGGGGGGDDDK.","..KKGGGGGGDDKK..","...KDDKKKKDDK...","................"],pal:{'K':'#1f2a3d','G':'#8fa3b8','L':'#c5d3e0','D':'#6d8199','W':'#f2f6fa','E':'#0a0a14','N':'#222233'}},
  {id:'bear',name:'シロクマ',tier:4,rows:["................","..KKK......KKK..",".KWWWKKKKKKWWWK.",".KWWWWWWWWWWWWK.","..KWWWWWWWWWWK..","..KWWEWWWWEWWK..","..KWWWWNNWWWWK..","..KWWWWSSWWWWK..","...KKWWWWWWKK...","..KWWWWWWWWWWK..",".KWWWWWWWWWWWWK.",".KWWSWWWWWWSWWK.",".KWWWWWWWWWWWWK.","..KWWKKWWKKWWK..","...KK......KK...","................"],pal:{'K':'#2a3a55','W':'#f7fbff','S':'#cfe0f0','N':'#1a1a2a','E':'#1a1a2a'}},
  {id:'cat',name:'ねこ',tier:4,rows:["................","..KK........KK..","..KOK......KOK..","..KOOKKKKKKOOK..","..KOOOOOOOOOOK..","..KOOEOOOOEOOK..","..KOOOOPPOOOOK..","..KOWWOOOOWWOK..","...KOOOOOOOOK...","...KOODOOODOK...","..KOOOOOOOOOOK..","..KOODOOOODOOK..","..KOOOOOOOOOOK..","..KOWWKOOKWWOK..","...KKKKKKKKKK...","................"],pal:{'K':'#3a1f0a','O':'#f0a64a','D':'#c97a24','W':'#fff3e0','E':'#1a1a2a','P':'#ff8a9a'}},
  {id:'fox',name:'きつね',tier:4,rows:["................","..KK........KK..",".KOOK......KOOK.",".KOBOKKKKKKOBOK.","..KOOOOOOOOOOK..","..KOOEOOOOEOOK..","..KWOOOOOOOOWK..","...KWWOOOOWWK...","....KWWNNWWK....",".....KWWWWK.....","..KKOOOOOOOOKK..",".KOOOOWWWWOOOOK.",".KOOOOWWWWOOOOK.","..KOOKKKKKKOOK..","...KK......KK...","................"],pal:{'K':'#3a1a0a','O':'#e8742a','W':'#fff6ec','B':'#3a1f14','E':'#1a1a2a','N':'#1a1a2a'}},
- {id:'robot',name:'ロボット',tier:5,rows:["................",".......KK.......",".......RR.......","...KKKKKKKKKK...","..KGGGGGGGGGGK..","..KGEEGGGGEEGK..","..KGEEGGGGEEGK..","..KGGGGGGGGGGK..","..KGKKKKKKKKGK..","..KGGGGGGGGGGK..","...KKKKKKKKKK...","..KGGGKGGKGGGK..","..KGGGKGGKGGGK..","..KDDDKDDKDDDK..","...KKK....KKK...","................"],pal:{'K':'#1c2433','G':'#9fb0c4','D':'#6f8097','E':'#6df0ff','R':'#ff5a5a'}},
- {id:'ghost',name:'おばけ',tier:5,rows:["................",".....KKKKKK.....","....KWWWWWWK....","...KWWWWWWWWK...","..KWWWWWWWWWWK..","..KWWKKWWKKWWK..","..KWWKEWWKEWWK..","..KWWKKWWKKWWK..","..KWWWWWWWWWWK..","..KWWWWKKWWWWK..","..KWWWWWWWWWWK..","..KWWWWWWWWWWK..","..KWSWWWWWWSWK..","..KWKWWKKWWKWK..","...KK.KKKK.KK...","................"],pal:{'K':'#2b2f55','W':'#eef0ff','S':'#c9ccf0','E':'#14142b'}}
+ {id:'robot',name:'ロボット',tier:5,fx:'robot',rows:["................",".......KK.......",".......RR.......","...KKKKKKKKKK...","..KGGGGGGGGGGK..","..KGEEGGGGEEGK..","..KGEEGGGGEEGK..","..KGGGGGGGGGGK..","..KGKKKKKKKKGK..","..KGGGGGGGGGGK..","...KKKKKKKKKK...","..KGGGKGGKGGGK..","..KGGGKGGKGGGK..","..KDDDKDDKDDDK..","...KKK....KKK...","................"],pal:{'K':'#1c2433','G':'#9fb0c4','D':'#6f8097','E':'#6df0ff','R':'#ff5a5a'}},
+ {id:'ghost',name:'おばけ',tier:5,fx:'ghost',rows:["................",".....KKKKKK.....","....KWWWWWWK....","...KWWWWWWWWK...","..KWWWWWWWWWWK..","..KWWKKWWKKWWK..","..KWWKEWWKEWWK..","..KWWKKWWKKWWK..","..KWWWWWWWWWWK..","..KWWWWKKWWWWK..","..KWWWWWWWWWWK..","..KWWWWWWWWWWK..","..KWSWWWWWWSWK..","..KWKWWKKWWKWK..","...KK.KKKK.KK...","................"],pal:{'K':'#2b2f55','W':'#eef0ff','S':'#c9ccf0','E':'#14142b'}}
 ];
 // レア度: 宝箱から出る確率（w）と、出始める階（MINF）。高いランクほど高い階でしか出ない。ペンギンの色違いは低い階から、ペンギン以外は高い階だけ
 // 同じスキンは出ない。同じランクを NEED 個集めると、1つ上のランクのスキンが1つ手に入る
@@ -185,13 +185,32 @@ function rainbowFrame(now){const x=_rbc.getContext('2d');x.clearRect(0,0,16,16);
   // 画像の読み取りは使わず、体（B）の位置だけ、1マス幅・12色の細かい虹のしまで直接塗る
   PENROWS.forEach((row,y)=>{for(let px=0;px<16;px++){const ch=row[px];if(ch==='.')continue;x.fillStyle=ch==='B'?'hsl('+Math.round((((px+y)*18-(now||0)/6)%360+360)%360)+',85%,55%)':pal[ch];x.fillRect(px,y,1,1)}});return _rbc}
 const _shc=document.createElement('canvas');_shc.width=16;_shc.height=16;
-function skinShine(id){const s=SKINS.find(k=>k.id===id);return !!(s&&s.shine)}
-function skinAnimated(id){const s=SKINS.find(k=>k.id===id);return !!(s&&(s.rainbow||s.shine))}
-// おうごんペンギン: 体の上を光の筋が斜めに走る（ペンギンの形の中だけに描く）
-function skinFrame(id,now){const sk0=SKINS.find(k=>k.id===id);if(sk0&&sk0.rainbow)return rainbowFrame(now);if(!skinShine(id))return skinSprite(id,now);const x=_shc.getContext('2d');x.globalCompositeOperation='source-over';x.clearRect(0,0,16,16);x.imageSmoothingEnabled=false;x.drawImage(skinSprite(id,now),0,0);
-  x.globalCompositeOperation='source-atop';const p=((now/45)%44)-10;
-  for(let yy=0;yy<16;yy++)for(let xx=0;xx<16;xx++){const d=xx+yy-p;if(d>=0&&d<3){x.fillStyle=d<1?'rgba(255,255,255,.95)':'rgba(255,244,170,.8)';x.fillRect(xx,yy,1,1)}}
-  x.globalCompositeOperation='source-over';return _shc}
+function skinFx(id){const s=SKINS.find(k=>k.id===id);return s?(s.fx||(s.rainbow?'rainbow':null)):null}
+function skinShine(id){const f=skinFx(id);return !!f&&f!=='rainbow'&&f!=='robot'&&f!=='ghost'}
+function skinAnimated(id){return !!skinFx(id)}
+const BODYPX=[];PENROWS.forEach((r,y)=>{for(let x=0;x<16;x++)if(r[x]==='B')BODYPX.push([x,y])});
+function sweepD(x,now,speed,cols){const p=((now/speed)%44)-10;for(let yy=0;yy<16;yy++)for(let xx=0;xx<16;xx++){const d=xx+yy-p;if(d>=0&&d<3){x.fillStyle=cols[d<1?0:1];x.fillRect(xx,yy,1,1)}}}
+// スキンごとの演出。ランク3＝色違い＋光・炎などの演出、ランク5＝さらに少し動く（ゆれる・まばたき・点滅）
+function skinFrame(id,now){const f=skinFx(id);if(f==='rainbow')return rainbowFrame(now);if(!f)return skinSprite(id,now);
+  const x=_shc.getContext('2d');x.globalCompositeOperation='source-over';x.clearRect(0,0,16,16);x.imageSmoothingEnabled=false;x.drawImage(skinSprite(id,now),0,0);const t=now||0;
+  if(f==='gold'||f==='silver'||f==='emerald'){x.globalCompositeOperation='source-atop';
+    if(f==='gold')sweepD(x,t,45,['rgba(255,255,255,.95)','rgba(255,244,170,.8)']);
+    else if(f==='silver')sweepD(x,t,60,['rgba(255,255,255,.95)','rgba(190,220,255,.85)']);
+    else{const p=((t/70)%28)-6;for(let yy=0;yy<16;yy++){const d=yy-p;if(d>=0&&d<2){x.fillStyle=d<1?'rgba(220,255,240,.95)':'rgba(120,255,200,.75)';x.fillRect(0,yy,16,1)}}}
+    x.globalCompositeOperation='source-over'}
+  else if(f==='galaxy'){BODYPX.forEach((q,i)=>{if(Math.sin(t/(170+i*11)+i*2.3)>0.9){x.fillStyle=i%3?'#ffffff':'#ff7ad9';x.fillRect(q[0],q[1],1,1)}})}
+  else if(f==='ruby'){BODYPX.forEach((q,i)=>{const ph=((t/110+i*7)%29);if(ph<1.6){x.fillStyle=ph<0.8?'#ffb347':'#ff6a3a';x.fillRect(q[0],q[1],1,1)}})}
+  else if(f==='black'){x.globalAlpha=0.55+0.45*Math.sin(t/260);x.fillStyle='#ff4a4a';x.fillRect(6,5,1,1);x.fillRect(10,5,1,1);x.globalAlpha=1}
+  else if(f==='robot'){x.fillStyle=Math.floor(t/450)%2===0?'#ff5a5a':'#6b1818';x.fillRect(7,2,2,1);const sh=Math.floor(t/500)%2;x.fillStyle='#ffffff';x.fillRect(4+sh,5,1,1);x.fillRect(10+sh,5,1,1)}
+  else if(f==='ghost'){if(t%2600<160){x.fillStyle='#eef0ff';x.fillRect(6,6,1,1);x.fillRect(10,6,1,1)}}
+  return _shc}
+function skinMotion(id,now){const f=skinFx(id);if(f==='ghost')return{dx:0,dy:Math.round(Math.sin(now/260)*1.6),a:.88+.12*Math.sin(now/400)};if(f==='robot')return{dx:Math.floor(now/700)%2?1:0,dy:0,a:1};return{dx:0,dy:0,a:1}}
+const SKPART={gold:'#ffb300',silver:'#8fb8ff',emerald:'#16b07a',galaxy:'#ff7ad9'};
+function skinParticles(id,now,cxp,cyp){const f=skinFx(id);if(!f)return;
+  if(SKPART[f]){const c=SKPART[f];if(Math.random()<0.12&&fx.filter(q=>q.k==='gl').length<8)fx.push({k:'gl',t:now,dx:2+(Math.random()*12|0),dy:1+(Math.random()*13|0)});
+    for(const q of fx){if(q.k!=='gl')continue;const u=(now-q.t)/560,gx=cxp+q.dx,gy=cyp+q.dy;P(gx,gy,1,1,'#ffffff');if(u>=0.15&&u<0.85){P(gx-1,gy,1,1,c);P(gx+1,gy,1,1,c);P(gx,gy-1,1,1,c);P(gx,gy+1,1,1,c)}if(u>=0.3&&u<0.7){P(gx-2,gy,1,1,c);P(gx+2,gy,1,1,c);P(gx,gy-2,1,1,c);P(gx,gy+2,1,1,c)}}}
+  else if(f==='ruby'||f==='black'){if(Math.random()<0.14&&fx.filter(q=>q.k==='pt').length<9)fx.push({k:'pt',t:now,dx:3+(Math.random()*10|0),dy:12});
+    for(const q of fx){if(q.k!=='pt')continue;const u=(now-q.t)/700,gx=cxp+q.dx+Math.round(Math.sin(u*6+q.dx)*1.5),gy=cyp+q.dy-Math.round(u*16);cx.globalAlpha=Math.max(0,1-u);if(f==='ruby')P(gx,gy,1,1,u<.4?'#ffd24a':'#ff6a3a');else P(gx,gy,2,2,'#6a3aa0');cx.globalAlpha=1}}}
 let OWNED=['def'],SKIN='def';
 try{const o=JSON.parse(ST.get('ice_skins','["def"]'));if(Array.isArray(o))OWNED=['def'].concat(o.filter(x=>x!=='def'&&SKINS.some(k=>k.id===x)))}catch(e){}
 SKIN=ST.get('ice_skin','def');if(!OWNED.includes(SKIN))SKIN='def';
@@ -530,7 +549,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261102-1943';
+const BUILD='20261102-1949';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -579,18 +598,14 @@ function frame(now){
         if(d===0||d===2)cx.fillRect(ax-w+(0),ay+(d===0?i:-i)-0,w*2+1,1);else cx.fillRect(ax+(d===1?-i:i),ay-w,1,w*2+1)}}}}
   // きらめき
   if(sparkle&&Math.random()<.8)fx.push({k:'sp',x:Math.round(pxp*T+3+Math.random()*10),y:Math.round(pyp*T+3+Math.random()*10),t:now});
-  fx=fx.filter(f=>now-f.t<(f.k==='bump'?250:f.k==='gl'?560:350));
+  fx=fx.filter(f=>now-f.t<(f.k==='bump'?250:f.k==='gl'?560:f.k==='pt'?700:350));
   for(const f of fx)if(f.k==='sp'){const a=1-(now-f.t)/350;P(f.x,f.y,1,1,a>.5?'#fff':'#a8dcef')}
   // ペンギン
   const bf=fx.find(f=>f.k==='bump');let ox=0,oy=0;if(bf){const a=1-(now-bf.t)/250;ox=Math.round(D[bf.d][0]*2*a);oy=Math.round(D[bf.d][1]*2*a)}
   const cxp=Math.round(pxp*T)+ox,cyp=Math.round(pyp*T)+oy;
   P(cxp+3,cyp+14,10,2,'rgba(0,0,0,.22)');
-  cx.save();cx.globalAlpha=alpha;cx.translate(cxp+8,cyp+8);cx.scale(scale,scale);cx.drawImage(skinFrame(SKIN,now),-8,-8);cx.restore();
-  // きらきら: 十字の光がペンギンのまわりにまたたく
-  if(skinShine(SKIN)){if(Math.random()<0.12&&fx.filter(q=>q.k==='gl').length<8)fx.push({k:'gl',t:now,dx:2+(Math.random()*12|0),dy:1+(Math.random()*13|0)});
-    for(const f of fx){if(f.k!=='gl')continue;const u=(now-f.t)/560,L=u<0.5?(u<0.25?0:1):(u<0.75?1:0);const gx=cxp+f.dx,gy=cyp+f.dy;
-      P(gx,gy,1,1,'#ffffff');if(u>=0.15&&u<0.85){P(gx-1,gy,1,1,'#ffb300');P(gx+1,gy,1,1,'#ffb300');P(gx,gy-1,1,1,'#ffb300');P(gx,gy+1,1,1,'#ffb300')}
-      if(u>=0.3&&u<0.7){P(gx-2,gy,1,1,'#ffcf40');P(gx+2,gy,1,1,'#ffcf40');P(gx,gy-2,1,1,'#ffcf40');P(gx,gy+2,1,1,'#ffcf40')}}}
+  const mo=skinMotion(SKIN,now);cx.save();cx.globalAlpha=alpha*mo.a;cx.translate(cxp+8+mo.dx,cyp+8+mo.dy);cx.scale(scale,scale);cx.drawImage(skinFrame(SKIN,now),-8,-8);cx.restore();
+  skinParticles(SKIN,now,cxp,cyp);
 
   drawOV(now);
   if(skinAnimated(SKIN)&&Math.floor(now/90)!==frame.rb){frame.rb=Math.floor(now/90);paintIcon()}
