@@ -169,11 +169,132 @@ const SKINS=[
 ];
 // レア度: 宝箱から出る確率（w）と、出始める階（MINF）。高いランクほど高い階でしか出ない。ペンギンの色違いは低い階から、ペンギン以外は高い階だけ
 // 同じスキンは出ない。同じランクを NEED 個集めると、1つ上のランクのスキンが1つ手に入る
-const RARITY=[null,{name:'ふつう',star:'★',col:'#9bbbd6',w:70},{name:'レア',star:'★★',col:'#5aa0ff',w:22},{name:'スーパーレア',star:'★★★',col:'#c77dff',w:6},{name:'でんせつ',star:'★★★★',col:'#ffd24a',w:2},{name:'ちょうでんせつ',star:'★★★★★',col:'#ff6a6a',w:1}];
-const MINF=[0,5,10,20,30,40];
-const MAXT=5;
+const RARITY=[null,{name:'ふつう',star:'★',col:'#9bbbd6',w:70},{name:'レア',star:'★★',col:'#5aa0ff',w:22},{name:'スーパーレア',star:'★★★',col:'#c77dff',w:6},{name:'でんせつ',star:'★★★★',col:'#ffd24a',w:2},{name:'ちょうでんせつ',star:'★★★★★',col:'#ff6a6a',w:1},{name:'しんわ',star:'★★★★★★',col:'#7ff7ff',w:0.4}];
+const MINF=[0,5,10,20,30,40,60];
+const MAXT=6;
 const NEED=5;
 const RB=['#e0443c','#f0932b','#f0c43a','#2f9b55','#2f7bd6','#7a4ac8'];
+/* ===== 星5・星6 のスキン =====
+   レア度が高いほど、見た目・動き・演出をはっきり豪華にする（今後スキンを増やすときも同じ）
+   ★4まで : 色違い／生き物の違い＋ときどき小さく跳ねる
+   ★5     : 生き物＋ずっと続く動き＋その子らしい演出が1つ（ロボット・おばけ・くらげ・ようせい・ドラゴン）
+   ★6     : ★5のすべて＋体の輪郭の光＋まわりのオーラ＋舞う・まわる粒＋体の中の動き（全部つける）
+   絵は左半分（8文字）だけ書いて mir() で左右に写す。動く絵は fr（コマの配列）と fp（1コマの長さms）で持つ。 */
+const NS=[];
+const mir=h=>h.map(s=>s+[...s].reverse().join(''));
+function pxRows(rows,list,ch){const r=rows.map(s=>s.split(''));for(const [x,y] of list){r[y][x]=ch;r[y][15-x]=ch}return r.map(s=>s.join(''))}
+function putRows(rows,list,ch){const r=rows.map(s=>s.split(''));for(const [x,y] of list)r[y][x]=ch;return r.map(s=>s.join(''))}
+function ns(id,name,tier,o){const s=Object.assign({id,name,tier},o);s.rows=o.fr?o.fr[0]:o.rows;NS.push(s);SKINS.push(s)}
+function isNS(id){return NS.some(k=>k.id===id)}
+
+// ---------- ★5 ----------
+const JT=mir(["........","....KKKK","..KKBBBB",".KBBLLBB",".KBLLBBB","KBBBBBBB","KBBEBBBB","KBBEBOBB","KBBBBBBB","KKBBBBBB",".KKKKKKK"]);
+ns('jelly','くらげ',5,{fx:'jelly',mot:'float',pt:'bubbles',ptc:['#cdeeff','#ffffff'],fp:320,
+  pal:{K:'#2a1a55',B:'#7fd0ff',L:'#d9f5ff',E:'#1a2a55',O:'#ff9ad8',T:'#58b0f0'},
+  fr:[JT.concat(["..T...T..T...T..",".T...T....T...T.","..T...T..T...T..",".T...T....T...T.","................"]),
+      JT.concat([".T...T....T...T.","..T...T..T...T..",".T...T....T...T.","..T...T..T...T..","................"])]});
+const FB=mir(["........","....KKKK","...KHHHH","..KHHHHH","..KHHSSS","..KHSESS","..KHSSOS","..KHSSSS","...KKSSS","...KDDDD","..KDLDDD",".KDDDDDD",".KDDDDDD","KDDDDDDD","KKKKKKKK","........"]);
+ns('fairy','ようせい',5,{fx:'fairy',mot:'flutter',pt:'dust',ptc:['#fff29a','#ffb8e0'],fp:170,
+  pal:{K:'#4a1f5c',H:'#ffd24a',S:'#ffe6d6',E:'#4a1f5c',O:'#ff9ab0',D:'#ff6fb8',L:'#ffb8e0',W:'#c8efff'},
+  fr:[pxRows(FB,[[1,2],[0,3],[1,3],[0,4],[1,4],[1,5]],'W'),pxRows(FB,[[1,6],[0,7],[1,7],[0,8],[1,8],[1,9]],'W')]});
+ns('dragon','ドラゴン',5,{fx:'dragon',mot:'sway',pt:'puff',ptc:['#ffe08a','#ff7a3a'],
+  pal:{K:'#0f3320',G:'#3cb36b',L:'#9be8b0',W:'#ffe9a8',H:'#ffd24a',E:'#14181a',R:'#e8503a',N:'#1d6a3c'},
+  rows:mir(["...H...R","..KHKKKK",".KGGGGGG",".KGLGGGG","KGGGGGGG","KGGGEGGG","KGGGEGGG","KGGGGGNG","KGGGGLLL","KGGGWWWW",".KGGWWWW",".KGGWWWW","..KGWWWW","..KGGGGG","...KKKKK","........"])});
+
+// ---------- ★6 ----------
+ns('phoenix','ほうおう',6,{fx:'flame',mot:'hover',pt:'embers',ptc:['#ffd24a','#ff6a3a','#ffffff'],ol:'#ffb03a',aura:['#ffe08a','#ff7a2a'],
+  pal:{K:'#4a0f0a',R:'#e8402a',F:'#ff9a2a',Y:'#ffe08a',E:'#2a1a1a',O:'#ffd24a'},
+  rows:mir(["....F..F","...FFFFF","..KKRRRR",".KRRRRRR",".KRRERRR",".KRRRRRO","KFFRRRRO","FFFRRYYY","FFFFRYYY","FFFFRYYY",".FFFRYYY","..FFRYYY","...FFRYY","....FFFR",".....FFF","......F."])});
+ns('unicorn','ユニコーン',6,{fx:'mane',mot:'prance',pt:'twinkle',ptc:['#ffc8f0','#c8f0ff','#fff6a8'],ol:'#ffc8f0',aura:['#ffd6f5','#a8d8ff'],
+  pal:{K:'#3a2a5a',B:'#ffffff',M:'#ff9ac8',D:'#d8def2',E:'#3a2a5a',O:'#ffb3c8',H:'#ffd24a'},
+  rows:mir([".......H","..KK...H","..KBKKHH",".KMBBBBB",".KMBBBBB","KMMBEBBB","KMMBEBBB","KMMBBBBB","KMMBBOOB",".KMMBBBB",".KMMDDDD","..KMMBBB","...KMBBB","....KKKK","........","........"])});
+ns('wizard','まほうつかい',6,{fx:'starhat',mot:'bob',pt:'orbit',ptc:['#ffe066','#ffffff'],ol:'#a88cff',aura:['#cdb8ff','#6a4cd8'],
+  pal:{K:'#1c1040',P:'#5a3cc8',Q:'#8a6cf0',Y:'#ffe066',S:'#ffe0c8',E:'#1c1040',W:'#f4f4ff',B:'#7a52e0'},
+  rows:mir(["......KP",".....KPP","....KPPQ","...KPYPQ","..KPPPPQ","KPPPPPPP",".KSSSSSS",".KSSESSS",".KWWWWWW",".KWWWWWW","KBWWWWWW","KBBWWWWW","KBBBWWWW","KBBBBBBB","KKKKKKKK","........"])});
+const AB=mir(["........","....HHHH","...H....","....HHHH","..KKKKKK",".KBBBBBB",".KBLLBBB",".KBBEBBB",".KBBBOBB",".KBBBBBB","..KSBBBB","..KBBBBB","...KBBBB","...KSSSS","....KKKK","........"]);
+ns('angel','てんし',6,{fx:'halo',mot:'float',pt:'feathers',ptc:['#ffffff','#fff2c0'],ol:'#fff2a0',aura:['#fff6c8','#ffd24a'],fp:300,
+  pal:{K:'#a8784a',B:'#ffeef2',L:'#fff8d8',S:'#f0cfd8',E:'#3a2a3a',O:'#ff8a9a',H:'#ffd24a',W:'#a8c8ff'},
+  fr:[pxRows(AB,[[1,10],[0,9],[0,10],[1,11],[2,11],[0,11]],'W'),pxRows(AB,[[1,12],[0,12],[0,13],[1,13],[2,12],[0,11]],'W')]});
+ns('devil','あくま',6,{fx:'devil',mot:'jitter',pt:'embers',ptc:['#ff7a3a','#a82a6a'],ol:'#ff4a5a',aura:['#ff6a7a','#7a1a8a'],
+  pal:{K:'#1c0a2a',P:'#6a2aa8',Q:'#9a5ae0',R:'#ff4a3a',E:'#ff3a3a',W:'#ffdede',V:'#4a1a78'},
+  rows:mir([".R......",".RR.....","..KKKKKK",".KPPPPPP",".KPQQPPP","KPPEEPPP","KPPPPPPP","KPPPWPPP",".KPPPPPP",".KPPPWWW","VKPPPWWW","VVKPPWWW","VVVKPPPP",".VV.KKKK","........","........"])});
+ns('crystal','クリスタル',6,{fx:'crystal',mot:'sway',pt:'twinkle',ptc:['#7fe8ff','#ffffff'],ol:'#bff6ff',aura:['#d8fbff','#38d8ff'],
+  pal:{K:'#0a3a5a',C:'#7fe8ff',B:'#38b8e8',L:'#bff6ff',W:'#ffffff',D:'#1a88c0',E:'#0a3a5a'},
+  rows:mir([".......K","......KC",".....KCW","....KCWL","...KCWLB","..KCWLBB",".KCWLBBB","KCWLBEBB","KCLLBEBB",".KCLBBBD","..KCBBDD","...KBBDD","....KBDD",".....KDD","......KD",".......K"])});
+ns('thunder','かみなりぐも',6,{fx:'thunder',mot:'jitter',pt:'bolts',ptc:['#fff6a8'],ol:'#fff08a',aura:['#fff6a8','#ffd21a'],
+  pal:{K:'#2a3050',C:'#8a96b8',L:'#c8d2ee',D:'#5a6690',E:'#1a1f38',R:'#ff9ab0',Y:'#ffe14a'},
+  rows:putRows(mir(["......KK","....KKCC","..KKCCLC",".KCCLCCC","KCCCCCCC","KCCCCCCC","KCCCECCC","KCCCECCC","KCRRCCCC","KDCCCCCC",".KDDCCCC","..KKDDDD","........","........","........","........"]),[[8,12],[9,12],[7,13],[8,13],[8,14],[9,14],[7,15]],'Y')});
+ns('water','みずのせいれい',6,{fx:'wave',mot:'bob',pt:'bubbles',ptc:['#e8f8ff','#a8e4ff'],ol:'#a8e4ff',aura:['#bfeaff','#38a8ff'],
+  pal:{K:'#0a3a6a',B:'#38a8ff',L:'#a8e4ff',D:'#1a78d0',E:'#0a2a55'},
+  rows:mir([".......K","......KB","......KB",".....KBB","....KBLB","...KBLBB","..KBLBBB",".KBBBBBB",".KBBEBBB","KBBBEBBB","KBBBBBBB","KBDBBBBB","KBDDBBBB",".KDDDDDD","..KKDDDD","....KKKK"])});
+ns('starchild','ほしのこ',6,{fx:'pulse',mot:'spin',pt:'orbit',ptc:['#fff6b0','#ffffff'],ol:'#fff6b0',aura:['#fff6c8','#ffb02a'],
+  pal:{K:'#6a4a00',Y:'#ffe14a',L:'#fff6b0',R:'#ff9ab0',E:'#5a3a00'},
+  rows:mir([".......K","......KY","......KY",".....KYL","KKKKKYYL","KYYYYYYL",".KYYYYYY","..KYYEYY","..KYYEYY","...KYYRY","...KYYYY","..KYYYYY",".KYYYK..","KYYYK...","KKKK....","........"])});
+ns('ninja','かげにんじゃ',6,{fx:'ninja',mot:'dash',trail:true,pt:'smoke',ptc:['#6a6a8a','#3a3a5a'],ol:'#6a7aff',aura:['#8a9aff','#2a3a8a'],
+  pal:{K:'#0a0a1a',N:'#2a3a7a',L:'#4a5aa0',S:'#ffd8b0',E:'#2a1a1a',R:'#e03a3a'},
+  rows:putRows(mir(["........","....KKKK","..KKNNNN",".KNNLNNN",".KNNNNNN",".KSSSSSS",".KSSESSS",".KNNNNNN","KKRRRRRR","KRRRRRRR",".KNNNNNN","KNNLNNNN","KNNNNNNN",".KNNNNNN","..KKKKKK","........"]),[[15,10],[15,11],[15,12]],'R')});
+
+// ---------- 動き・演出の部品 ----------
+const _pxc={};
+function pixOf(s,ch){const key=s.id+'|'+ch;return _pxc[key]||(_pxc[key]=(()=>{const o=[];s.rows.forEach((r,y)=>{for(let i=0;i<16;i++)if(r[i]===ch)o.push([i,y])});return o})())}
+// 体の中の動き（絵の上に重ねる）
+const FXF={
+ jelly:(x,t,s)=>{x.globalCompositeOperation='source-atop';x.globalAlpha=.06+.18*(.5+.5*Math.sin(t/420));x.fillStyle='#ffffff';x.fillRect(0,0,16,11);x.globalAlpha=1;x.globalCompositeOperation='source-over'},
+ fairy:(x,t,s)=>{if(Math.sin(t/190)>.86){x.fillStyle='#ffffff';x.fillRect(5,2,1,1);x.fillRect(10,2,1,1)}},
+ dragon:(x,t,s)=>{if(t%2600<240){x.fillStyle='#ff5a3a';for(const [a,b] of pixOf(s,'E'))x.fillRect(a,b,1,1)}},
+ flame:(x,t,s)=>{for(const [a,b] of pixOf(s,'F')){const ph=((t/90)+((a*7+b*13)%11))%6;x.fillStyle=ph<1.2?'#ffffff':ph<2.6?'#ffe08a':ph<4.2?'#ff9a2a':'#ff5a2a';x.fillRect(a,b,1,1)}},
+ mane:(x,t,s)=>{for(const [a,b] of pixOf(s,'M')){x.fillStyle='hsl('+Math.round((((a+b)*28-t/7)%360+360)%360)+',85%,68%)';x.fillRect(a,b,1,1)}},
+ starhat:(x,t,s)=>{for(const [a,b] of pixOf(s,'Y')){x.fillStyle=Math.floor(t/200+a)%2?'#ffffff':'#ffe066';x.fillRect(a,b,1,1)}},
+ halo:(x,t,s)=>{x.globalAlpha=.35+.65*Math.abs(Math.sin(t/380));x.fillStyle='#fffbe0';for(const [a,b] of pixOf(s,'H'))x.fillRect(a,b,1,1);x.globalAlpha=1},
+ devil:(x,t,s)=>{x.fillStyle=Math.floor(t/260)%2?'#ffffff':'#ff3a3a';for(const [a,b] of pixOf(s,'E'))x.fillRect(a,b,1,1);x.globalAlpha=.4+.4*Math.sin(t/200);x.fillStyle='#ff7a5a';for(const [a,b] of pixOf(s,'R'))x.fillRect(a,b,1,1);x.globalAlpha=1},
+ crystal:(x,t,s)=>{x.globalCompositeOperation='source-atop';sweepD(x,t,50,['rgba(255,255,255,.95)','rgba(190,245,255,.8)']);x.globalCompositeOperation='source-over'},
+ thunder:(x,t,s)=>{if(t%1700<120){x.globalCompositeOperation='source-atop';x.fillStyle='rgba(255,255,255,.75)';x.fillRect(0,0,16,16);x.globalCompositeOperation='source-over'}},
+ wave:(x,t,s)=>{x.globalCompositeOperation='source-atop';x.fillStyle='rgba(255,255,255,.5)';x.fillRect(0,Math.floor((t/55)%26)-4,16,2);x.globalCompositeOperation='source-over'},
+ pulse:(x,t,s)=>{x.globalCompositeOperation='source-atop';x.globalAlpha=.08+.28*(.5+.5*Math.sin(t/300));x.fillStyle='#ffffff';x.fillRect(0,0,16,16);x.globalAlpha=1;x.globalCompositeOperation='source-over'},
+ ninja:(x,t,s)=>{if(t%3000<160){x.fillStyle='#ff3a3a';for(const [a,b] of pixOf(s,'E'))x.fillRect(a,b,1,1)}}
+};
+// 体ぜんたいの動き
+const MOT={
+ float:t=>({dx:0,dy:Math.round(Math.sin(t/320)*2),a:1}),
+ flutter:t=>({dx:Math.round(Math.sin(t/230)),dy:Math.round(Math.sin(t/130)),a:1}),
+ sway:t=>({dx:Math.round(Math.sin(t/420)*2),dy:0,a:1}),
+ hover:t=>({dx:0,dy:-1+Math.round(Math.sin(t/480)*2),a:1}),
+ prance:t=>{const c=t%1100;return{dx:0,dy:c<260?-Math.round(Math.sin(c/260*Math.PI)*3):0,a:1}},
+ jitter:t=>({dx:Math.round(Math.sin(t/37)),dy:Math.round(Math.cos(t/43)),a:1}),
+ dash:t=>{const c=t%2600;return{dx:c<320?Math.round(Math.sin(c/320*Math.PI)*3):0,dy:0,a:1}},
+ bob:t=>({dx:0,dy:Math.round(Math.sin(t/400)*2),a:1}),
+ spin:t=>({dx:Math.round(Math.sin(t/500)*2),dy:Math.round(Math.cos(t/500)*2),a:1})
+};
+// 舞う・まわる粒（その場の時刻だけで決まるので、覚えておく物がない）
+function ptLoop(n,period,now,cb){for(let i=0;i<n;i++)cb(i,((now/period)+i/n)%1)}
+const FXP={
+ bubbles:(now,X,Y,c)=>ptLoop(7,2400,now,(i,u)=>{cx.globalAlpha=Math.max(0,1-u*u);P(X+1+(i*5)%14+Math.round(Math.sin(u*7+i)*1.5),Y+15-Math.round(u*19),1,1,c[i%c.length]);cx.globalAlpha=1}),
+ dust:(now,X,Y,c)=>ptLoop(8,1800,now,(i,u)=>{cx.globalAlpha=Math.max(0,1-u);P(X+((i*5)%15)+Math.round(Math.sin(u*5+i)),Y+3+Math.round(u*13),1,1,c[i%c.length]);cx.globalAlpha=1}),
+ puff:(now,X,Y,c)=>{if(now%2600>1000)return;ptLoop(6,500,now,(i,u)=>{cx.globalAlpha=Math.max(0,1-u);P(X+(i%2?12:3)+Math.round(Math.sin(u*6+i)*1.5),Y+6-Math.round(u*11),1,1,u<.4?c[0]:c[1]);cx.globalAlpha=1})},
+ embers:(now,X,Y,c)=>ptLoop(9,1500,now,(i,u)=>{cx.globalAlpha=Math.max(0,1-u);P(X+2+(i*7)%12+Math.round(Math.sin(u*6+i*2)*1.5),Y+13-Math.round(u*17),1,1,c[(i+Math.floor(u*3))%c.length]);cx.globalAlpha=1}),
+ twinkle:(now,X,Y,c)=>ptLoop(6,1300,now,(i,u)=>{const gx=X+1+((i*29)%14),gy=Y+1+((i*17)%13),k=Math.sin(u*Math.PI);if(k<.15)return;cx.globalAlpha=k;P(gx,gy,1,1,'#ffffff');if(k>.55){const q=c[i%c.length];P(gx-1,gy,1,1,q);P(gx+1,gy,1,1,q);P(gx,gy-1,1,1,q);P(gx,gy+1,1,1,q)}cx.globalAlpha=1}),
+ orbit:(now,X,Y,c)=>{for(let i=0;i<3;i++){const a=now/650+i*Math.PI*2/3,ox=X+8+Math.round(Math.cos(a)*11),oy=Y+8+Math.round(Math.sin(a)*5);P(ox,oy,1,1,'#ffffff');P(ox-1,oy,1,1,c[0]);P(ox+1,oy,1,1,c[0]);P(ox,oy-1,1,1,c[0]);P(ox,oy+1,1,1,c[0])}},
+ feathers:(now,X,Y,c)=>ptLoop(6,2400,now,(i,u)=>{cx.globalAlpha=Math.max(0,1-u*u);P(X+1+(i*7)%14+Math.round(Math.sin(u*5+i)*2),Y+2+Math.round(u*14),1,2,c[i%c.length]);cx.globalAlpha=1}),
+ bolts:(now,X,Y,c)=>{if(now%1700>330)return;const k=Math.floor(now/110);let sd=(k*7919)%65536;const rnd=()=>{sd=(sd*1103+12345)%65536;return sd/65536};let bx=X+(k%2?-2:17);for(let y=Y-2;y<Y+18;y+=2){const nx=bx+Math.round((rnd()-.5)*4);P(Math.min(nx,bx),y,Math.abs(nx-bx)+1,2,c[0]);bx=nx}},
+ smoke:(now,X,Y,c)=>ptLoop(6,1400,now,(i,u)=>{cx.globalAlpha=Math.max(0,.7-u*.7);P(X+3+(i*5)%10-Math.round(u*4),Y+13-Math.round(u*5),2,2,c[i%c.length]);cx.globalAlpha=1})
+};
+const _nsc=document.createElement('canvas');_nsc.width=16;_nsc.height=16;
+const _nsp={};
+function nsSprite(s,t){const n=s.fr?s.fr.length:1,i=s.fr?Math.floor(t/(s.fp||250))%n:0,k=s.id+'#'+i;return _nsp[k]||(_nsp[k]=sprite(s.fr?s.fr[i]:s.rows,s.pal))}
+function nsFrame(id,now){const s=NS.find(k=>k.id===id),t=now||0,x=_nsc.getContext('2d');x.globalCompositeOperation='source-over';x.globalAlpha=1;x.clearRect(0,0,16,16);x.imageSmoothingEnabled=false;x.drawImage(nsSprite(s,t),0,0);
+  if(FXF[s.fx])FXF[s.fx](x,t,s);
+  if(s.ol){x.globalCompositeOperation='source-over';x.globalAlpha=.3+.55*(.5+.5*Math.sin(t/300));x.fillStyle=s.ol;for(const [a,b] of pixOf(s,'K'))x.fillRect(a,b,1,1);x.globalAlpha=1}
+  return _nsc}
+function nsMotion(id,now){const s=NS.find(k=>k.id===id);return s&&MOT[s.mot]?MOT[s.mot](now):{dx:0,dy:0,a:1}}
+function nsParticles(id,now,X,Y){const s=NS.find(k=>k.id===id);if(s&&FXP[s.pt])FXP[s.pt](now,X,Y,s.ptc||[])}
+const _auraC={};
+function auraCellsOf(s){if(_auraC[s.id])return _auraC[s.id];const sil=new Set();s.rows.forEach((r,y)=>{for(let x=0;x<16;x++)if(r[x]!=='.')sil.add(x+','+y)});const out=[];
+  for(let y=-3;y<19;y++)for(let x=-3;x<19;x++){if(sil.has(x+','+y))continue;let n=99;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++)if(sil.has((x+dx)+','+(y+dy)))n=Math.min(n,Math.abs(dx)+Math.abs(dy));if(n<=3)out.push([x,y,n])}return _auraC[s.id]=out}
+// ★6: 体のまわりのオーラ（絵より先に描く）。かげにんじゃは、動いた跡の残像も出す
+function nsAura(id,now,X,Y,al){const s=NS.find(k=>k.id===id);if(!s)return;
+  if(s.aura){const a=.34+.2*Math.sin(now/330+s.id.length);for(const q of auraCellsOf(s)){cx.globalAlpha=Math.max(0,Math.min(1,(q[2]<=1?a+.18:a*.5)*al));P(X+q[0],Y+q[1],1,1,q[2]<=1?s.aura[0]:s.aura[1])}cx.globalAlpha=1}
+  if(s.trail){for(let k=1;k<=2;k++){const m=nsMotion(id,now-k*70),img=nsFrame(id,now-k*70);cx.globalAlpha=.3/k*al;cx.drawImage(img,X+m.dx,Y+m.dy);cx.globalAlpha=1}}}
+
 const _sc={};
 function skinSprite(id,now){const s=SKINS.find(k=>k.id===id)||SKINS[0];let key=s.id,pal=s.pal;
   
@@ -192,7 +313,7 @@ function skinAnimated(id){return !!skinFx(id)||skinTier(id)===4}
 const BODYPX=[];PENROWS.forEach((r,y)=>{for(let x=0;x<16;x++)if(r[x]==='B')BODYPX.push([x,y])});
 function sweepD(x,now,speed,cols){const p=((now/speed)%44)-10;for(let yy=0;yy<16;yy++)for(let xx=0;xx<16;xx++){const d=xx+yy-p;if(d>=0&&d<3){x.fillStyle=cols[d<1?0:1];x.fillRect(xx,yy,1,1)}}}
 // スキンごとの演出。ランク3＝色違い＋光・炎などの演出、ランク5＝さらに少し動く（ゆれる・まばたき・点滅）
-function skinFrame(id,now){const f=skinFx(id);if(f==='rainbow')return rainbowFrame(now);if(!f)return skinSprite(id,now);
+function skinFrame(id,now){const f=skinFx(id);if(f==='rainbow')return rainbowFrame(now);if(isNS(id))return nsFrame(id,now);if(!f)return skinSprite(id,now);
   const x=_shc.getContext('2d');x.globalCompositeOperation='source-over';x.clearRect(0,0,16,16);x.imageSmoothingEnabled=false;x.drawImage(skinSprite(id,now),0,0);const t=now||0;
   if(f==='gold'||f==='silver'){x.globalCompositeOperation='source-atop';
     if(f==='gold')sweepD(x,t,45,['rgba(255,255,255,.95)','rgba(255,244,170,.8)']);
@@ -208,10 +329,10 @@ const KPX=[];PENROWS.forEach((r,y)=>{for(let x=0;x<16;x++)if(r[x]==='K')KPX.push
 const SILH=new Set();PENROWS.forEach((r,y)=>{for(let x=0;x<16;x++)if(r[x]!=='.')SILH.add(x+','+y)});
 const AURA_CELLS=[];for(let y=-3;y<19;y++)for(let x=-3;x<19;x++){if(SILH.has(x+','+y))continue;let n=99;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++)if(SILH.has((x+dx)+','+(y+dy)))n=Math.min(n,Math.abs(dx)+Math.abs(dy));if(n<=3)AURA_CELLS.push([x,y,n])}
 // こん: 体のまわりが星あかり（白と水色）でふわっと光って脈打つ（絵の外側にも出る）
-function skinAura(id,now,cxp,cyp,al){if(skinFx(id)!=='galaxy')return;const a=.28+.22*Math.sin(now/330);for(const q of AURA_CELLS){cx.globalAlpha=Math.max(0,Math.min(1,(q[2]<=1?a+.15:a*.55)*al));P(cxp+q[0],cyp+q[1],1,1,q[2]<=1?'#f4fbff':'#7fc8ff')}cx.globalAlpha=1}
-function skinMotion(id,now){const f=skinFx(id);if(skinTier(id)===4){let h=0;for(const ch of id)h+=ch.charCodeAt(0);const c=(now+(h%5)*360)%1800,j=c<350?Math.round(Math.sin(c/350*Math.PI)*4):0;return{dx:0,dy:-j,a:1}}if(f==='ghost')return{dx:0,dy:Math.round(Math.sin(now/260)*2),a:.82+.18*Math.sin(now/400)};if(f==='robot')return{dx:Math.round(Math.sin(now/300)*2),dy:Math.floor(now/280)%2?-1:0,a:1};return{dx:0,dy:0,a:1}}
+function skinAura(id,now,cxp,cyp,al){if(isNS(id)){nsAura(id,now,cxp,cyp,al);return}if(skinFx(id)!=='galaxy')return;const a=.28+.22*Math.sin(now/330);for(const q of AURA_CELLS){cx.globalAlpha=Math.max(0,Math.min(1,(q[2]<=1?a+.15:a*.55)*al));P(cxp+q[0],cyp+q[1],1,1,q[2]<=1?'#f4fbff':'#7fc8ff')}cx.globalAlpha=1}
+function skinMotion(id,now){if(isNS(id))return nsMotion(id,now);const f=skinFx(id);if(skinTier(id)===4){let h=0;for(const ch of id)h+=ch.charCodeAt(0);const c=(now+(h%5)*360)%1800,j=c<350?Math.round(Math.sin(c/350*Math.PI)*4):0;return{dx:0,dy:-j,a:1}}if(f==='ghost')return{dx:0,dy:Math.round(Math.sin(now/260)*2),a:.82+.18*Math.sin(now/400)};if(f==='robot')return{dx:Math.round(Math.sin(now/300)*2),dy:Math.floor(now/280)%2?-1:0,a:1};return{dx:0,dy:0,a:1}}
 const SKPART={gold:'#ffb300',silver:'#8fb8ff'};
-function skinParticles(id,now,cxp,cyp){const f=skinFx(id);if(!f)return;
+function skinParticles(id,now,cxp,cyp){if(isNS(id)){nsParticles(id,now,cxp,cyp);return}const f=skinFx(id);if(!f)return;
   if(SKPART[f]){const c=SKPART[f];if(Math.random()<0.12&&fx.filter(q=>q.k==='gl').length<8)fx.push({k:'gl',t:now,dx:2+(Math.random()*12|0),dy:1+(Math.random()*13|0)});
     for(const q of fx){if(q.k!=='gl')continue;const u=(now-q.t)/560,gx=cxp+q.dx,gy=cyp+q.dy;P(gx,gy,1,1,'#ffffff');if(u>=0.15&&u<0.85){P(gx-1,gy,1,1,c);P(gx+1,gy,1,1,c);P(gx,gy-1,1,1,c);P(gx,gy+1,1,1,c)}if(u>=0.3&&u<0.7){P(gx-2,gy,1,1,c);P(gx+2,gy,1,1,c);P(gx,gy-2,1,1,c);P(gx,gy+2,1,1,c)}}}
   else if(f==='emerald'){for(let i=0;i<5;i++){const gy=cyp+Math.floor((now/62+i*3)%15),gx=Math.min(cxp+14,Math.max(cxp,Math.round(cxp+7+Math.sin(now/520+i*1.7)*5+(i%2?2:-2)))),c=i%2?'#7dffc0':'#2fd08a';P(gx,gy,1,1,c);P(gx+1,gy+1,1,1,c);P(gx+1,gy,1,1,'#0f7a52')}}
@@ -221,8 +342,8 @@ function skinParticles(id,now,cxp,cyp){const f=skinFx(id);if(!f)return;
 let OWNED=['def'],SKIN='def';
 try{const o=JSON.parse(ST.get('ice_skins','["def"]'));if(Array.isArray(o))OWNED=['def'].concat(o.filter(x=>x!=='def'&&SKINS.some(k=>k.id===x)))}catch(e){}
 SKIN=ST.get('ice_skin','def');if(!OWNED.includes(SKIN))SKIN='def';
-let GIVEN={1:false,2:false,3:false,4:false};
-try{GIVEN=Object.assign({1:false,2:false,3:false,4:false},JSON.parse(ST.get('ice_given','{}')))}catch(e){}
+let GIVEN={1:false,2:false,3:false,4:false,5:false};
+try{GIVEN=Object.assign({1:false,2:false,3:false,4:false,5:false},JSON.parse(ST.get('ice_given','{}')))}catch(e){}
 function saveSkins(){ST.set('ice_skins',JSON.stringify(OWNED));ST.set('ice_given',JSON.stringify(GIVEN))}
 function ownedIn(t){return SKINS.filter(k=>k.tier===t&&OWNED.includes(k.id)).length}
 function unownedIn(t){return SKINS.filter(k=>k.tier===t&&!OWNED.includes(k.id))}
@@ -657,7 +778,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0211';
+const BUILD='20261103-0251';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
