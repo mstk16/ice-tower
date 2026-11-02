@@ -508,7 +508,7 @@ function mkConf(n,seed){const r=mkRng(seed);return Array.from({length:n},()=>({a
 function ovAdd(o){if(FXLV>0||o.k==='fade')OV.push(o)}
 function banner(txt,ms){if(FXLV===0)return;const e=$('#bn');e.textContent=txt;e.classList.add('on');clearTimeout(banner.t);banner.t=setTimeout(()=>e.classList.remove('on'),ms)}
 function skipFx(){if(OV.length||$('#bn').classList.contains('on')){OV.length=0;$('#bn').classList.remove('on');cv.style.transform=''}}
-function recFx(){if(FXLV===0)return;ovAdd({k:'rec',t:performance.now()+300});const e=$('#bs').parentElement;e.classList.remove('pulse');void e.offsetWidth;e.classList.add('pulse')}
+function recFx(){if(FXLV===0)return;const e=$('#bs').parentElement;e.classList.remove('pulse');void e.offsetWidth;e.classList.add('pulse')}
 function PA(x0,y0,w,h,c,a){cx.globalAlpha=Math.max(0,Math.min(1,a));P(x0,y0,w,h,c);cx.globalAlpha=1}
 function ovRing(x0,y0,r,col,a){if(r<1||a<=0)return;cx.globalAlpha=Math.min(1,a);cx.fillStyle=col;for(let k=0;k<360;k+=Math.max(4,Math.round(360/(r*6)))){const t=k*Math.PI/180;cx.fillRect(Math.round(x0+r*Math.cos(t)),Math.round(y0+r*Math.sin(t)),1,1)}cx.globalAlpha=1}
 function pulseSkinBtn(){const b=$('#skinbtn');b.classList.remove('pulse2');void b.offsetWidth;b.classList.add('pulse2')}
@@ -549,7 +549,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261102-1949';
+const BUILD='20261102-1950';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
