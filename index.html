@@ -137,7 +137,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 <div class="bar"><div class="fl" title="今の階"><span class="hl">階</span><b id="fl">1F</b></div><div title="手数"><span class="hl">手数</span><b id="mv">0</b></div><div title="穴に落ちた回数"><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
-<div class="btns"><button id="undo" class="act a-undo" title="1つ戻す" aria-label="1つ戻す"><canvas class="ai" data-i="undo"></canvas><span>1つ戻す</span></button><button id="reset" class="act a-reset" title="スタート地点に戻る（この階を最初から）" aria-label="スタート地点に戻る"><canvas class="ai" data-i="reset"></canvas><span class="lg">スタート地点に戻る</span></button><button id="hint" class="act a-hint" title="次の一手を見る" aria-label="次の一手を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
+<div class="btns"><button id="undo" class="act a-undo" title="1つ戻す" aria-label="1つ戻す"><canvas class="ai" data-i="undo"></canvas><span>1つ戻す</span></button><button id="reset" class="act a-reset" title="スタート地点に戻る（この階を最初から）" aria-label="スタート地点に戻る"><canvas class="ai" data-i="reset"></canvas><span class="lg">スタート地点に戻る</span></button><button id="hint" class="act a-hint" title="ゴールまでの最短手数を見る" aria-label="ゴールまでの最短手数を見る"><canvas class="ai" data-i="hint"></canvas><span>ヒント</span></button><button id="home" class="act a-home" title="1階から新しく始める（2回押し）" aria-label="1階から新しく始める"><canvas class="ai" data-i="home"></canvas><span>1階から</span></button></div>
 <div id="goalpanel" hidden></div><div class="opts" id="opts"></div><div class="row"><label>演出 <select id="fx"><option value="2">標準</option><option value="1">控えめ</option><option value="0">なし</option></select></label><label>操作 <select id="ctl"><option value="swipe">スワイプ</option><option value="dpad">十字ボタン</option></select></label><label>軌跡 <select id="tr"><option value="1">あり</option><option value="0">なし</option></select></label><label>ひび割れの床 <select id="cr"><option value="1">あり</option><option value="0">なし</option></select></label><label>視界 <select id="vw"><option value="0">全体が見える</option><option value="3">広い（7×7）</option><option value="2">ふつう（5×5）</option></select></label></div>
 <div class="fchips" id="fc" hidden></div>
 <div class="leg" id="leg"></div>
@@ -860,7 +860,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-1549';
+const BUILD='20261103-1623';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -874,7 +874,12 @@ setTimeout(()=>checkUpdate(false),4000);
 function homeDisarm(){homeArm=false;clearTimeout(homeT);const b=$('#home');b.classList.remove('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.home)}
 $('#home').onclick=()=>{if(anim)return;if(!homeArm){homeArm=true;const b=$('#home');b.classList.add('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.homeok);toast('もう一度押すと、1階からやり直す',1800);homeT=setTimeout(homeDisarm,3000);return}homeDisarm();fall=0;load(1)};
 
-$('#hint').onclick=()=>{if(anim)return;const d=findSol(S.x,S.y,S.holes);if(d===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=d;hintT=performance.now();hintUsed=true;saveRun()};
+// ヒント: 進む向きは教えず、いまの位置からゴールまでの最短の手数だけを見せる
+function remainMoves(x0,y0,h0){const seen=new Set([x0+','+y0+','+h0.slice().sort().join('.')]);let cur=[[x0,y0,h0]],n=0,nodes=0;
+  while(cur.length&&nodes<30000){n++;const nx=[];for(const [x,y,hs] of cur){nodes++;for(let d=0;d<4;d++){const m=move(g,hs,x,y,d);if(!m||m.res==='fall')continue;if(m.res==='win')return n;
+    const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);nx.push([m.x,m.y,m.holes])}}cur=nx}
+  return null}
+$('#hint').onclick=()=>{if(anim)return;const n=remainMoves(S.x,S.y,S.holes);if(n===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=-1;hintUsed=true;saveRun();toast('💡 ゴールまで 最短 <span style="color:#ffd24a;font-size:22px">'+n+'</span> 手<br><span style="font-size:12px;color:#9bbbd6">いまの位置から数えた手数</span>',2800)};
 function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList.toggle('on',v==='dpad')}
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
 function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
