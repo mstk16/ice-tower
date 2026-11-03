@@ -665,14 +665,19 @@ function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.w
 function genLevelBase(floor){const job=newJob(floor);let r=null;while(!(r=stepJob(job,1000)));return r}
 function genLevelQuick(floor){const job=newJob(floor);job.ext=0;job.work=2300;let r=null;while(!(r=stepJob(job,500)));return r} // すぐ必要なとき用（0.7秒以内。条件は少しゆるい）
 let PRE={}; // 裏で先に作っておいた階（キー→{rows}）。作るのは別スレッド（Worker）なので、遊んでいる画面は止まらない
-function preKey(floor){return floor+'|'+(NOCR?1:0)}
+function preKey(floor,i){return floor+'|'+(NOCR?1:0)+'|'+(i||0)}
 const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=12;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
   +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,reachCells,unreach,stairOpen,addDecoys,addCracks,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
   +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);if(m.want)job.want=m.want;let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
 let GW=null;
-try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
-function prefetch(floor){if(floor<1||!GW)return;const k=preKey(floor);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=4)delete PRE[keys[0]];PRE[k]={rows:null};try{GW.postMessage({id:k,floor:floor,nc:NOCR?1:0})}catch(e){delete PRE[k]}}
-function takePre(floor){const k=preKey(floor),e=PRE[k];if(!e||!e.rows)return null;delete PRE[k];return e.rows}
+try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{GWP[0]=Math.max(0,GWP[0]-1);const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
+let GW2=null,GWP=[0,0]; // 部屋が増える階のために、作る係をもう1つ（交互に仕事を渡す）
+function gw2(){if(GW2||!GW)return GW2;try{GW2=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW2.onmessage=e=>{GWP[1]=Math.max(0,GWP[1]-1);const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW2.onerror=()=>{GW2=null}}catch(e){GW2=null}return GW2}
+function prefetch(floor,i){if(floor<1||!GW)return;const k=preKey(floor,i);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=12)delete PRE[keys[0]];PRE[k]={rows:null};
+  let w=GW,wi=0;if(roomsFor(floor)>1&&GWP[1]<GWP[0]){const b=gw2();if(b){w=b;wi=1}}
+  try{GWP[wi]++;w.postMessage({id:k,floor:floor,nc:NOCR?1:0})}catch(e){GWP[wi]=Math.max(0,GWP[wi]-1);delete PRE[k]}}
+function prefetchFloor(floor){for(let i=0;i<roomsFor(floor);i++)prefetch(floor,i)}
+function takePre(floor,i){const k=preKey(floor,i),e=PRE[k];if(!e||!e.rows)return null;delete PRE[k];return e.rows}
 let curRows=null;
 /* ===== 宝箱（視界が「ふつう」「狭い」のときだけ。10階より上で出る） ===== */
 const CHEST_MIN=5,CHEST_RATE=0.1; // 5階から・難易度（視界・ひび割れ）に関係なく、階を作るたびに10%
@@ -697,7 +702,19 @@ function noteRecent(rows){RECENT.push(rowsKey(rows));if(RECENT.length>10)RECENT.
 function stashAdd(rows){if(!validRows(rows))return;const k=rowsKey(rows);if(STASH.some(e=>rowsKey(e.r)===k))return;const n=chLenOf(rows);if(n<4)return;STASH.push({r:rows,n:n});if(STASH.length>40)STASH.shift();ST.set('ice_stash',JSON.stringify(STASH))}
 function stashPick(floor){const want=targetLen(floor),c=STASH.concat(SEEDS).filter(e=>e.n>=want-2&&e.n<=want+1&&!RECENT.includes(rowsKey(e.r))&&(!NOCR||!e.r.join('').includes('c')));if(c.length<3)return null;const e=c[Math.floor(Math.random()*c.length)];noteRecent(e.r);
   let rows=e.r.slice();if(Math.random()<0.5)rows=rows.map(r=>r.split('').reverse().join(''));if(Math.random()<0.5)rows=rows.slice().reverse();return rows}
-function genLevel(floor){const skip=noChestNext;noChestNext=false;let rows=takePre(floor);if(rows){stashAdd(rows);noteRecent(rows)}else{rows=floor>7?stashPick(floor):null;if(!rows)rows=genLevelQuick(floor)}return skip?rows:addChest(rows,floor)} // ヒントを使ってゴールした次の階は、宝箱の抽選をしない
+/* ===== 高い階は「部屋をつなぐ」: 151階から2部屋・241階から3部屋・331階から4部屋。視界は501階から7×7・751階から5×5 ===== */
+function roomsFor(f){return f>330?4:f>240?3:f>150?2:1}
+function autoView(f){return f>750?2:f>500?3:0}
+function viewEff(){const a=CH?0:autoView(fl);return VIEW>0&&a>0?Math.min(VIEW,a):(VIEW>0?VIEW:a)}
+let RM=null; // RM={fl,rows:[各部屋],i:いまの部屋}。部屋が1つの階はnull
+let VE0=-1;
+function viewNote(){const a=autoView(fl);if(VE0>=0&&a!==VE0&&a>0)toast('🌫 視界がせまくなった<br><span style="font-size:12px;color:#9bbbd6">'+(a===3?'7×7':'5×5')+'の範囲だけ見える</span>',2800);VE0=a}
+function genRooms(floor){const skip=noChestNext;noChestNext=false;const k=roomsFor(floor),out=[];
+  for(let i=0;i<k;i++){let rows=takePre(floor,i);if(rows){stashAdd(rows);noteRecent(rows)}else{rows=floor>7?stashPick(floor):null;if(!rows)rows=genLevelQuick(floor)}out.push(rows)}
+  if(!skip){const j=Math.floor(Math.random()*k);out[j]=addChest(out[j],floor)} // ヒントを使ってゴールした次の階は、宝箱の抽選をしない。宝箱は部屋のどれか1つにだけ
+  return out}
+function roomNext(){if(!RM)return;RM.i++;curRows=RM.rows[RM.i];g=curRows.map(r=>r.split(''));for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
+  S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(shortest(g,sx,sy)||solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];draw_hud();saveRun()}
 function chestAt(floor){return SKINS.some(k=>k.tier>0&&k.tier<=topTier()&&MINF[k.tier]<=floor&&!OWNED.includes(k.id))}
 // ランクは「その階で出るランク全部」の固定の重みで引く（低いランクをそろえても、高いランクが出やすくならない）。
 // 引いたランクがすでに全部そろっているときは、近い低いランク→なければ近い高いランクの順で、持っていないスキンを出す
@@ -823,10 +840,11 @@ $('#skinbtn').onclick=()=>{const p=$('#skinpanel');p.hidden=!p.hidden;$('#skinbt
 
 function load(n,rows){
   if(CH)chEnd();
-  fl=Math.max(1,n);curRows=rows||genLevel(fl);if(!rows)hintUsed=false;g=curRows.map(r=>r.split(''));
+  fl=Math.max(1,n);if(!rows){const rr=genRooms(fl);RM=rr.length>1?{fl:fl,rows:rr,i:0}:null;rows=rr[0];hintUsed=false}else if(!(RM&&RM.fl===fl))RM=null;
+  curRows=rows;g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(shortest(g,sx,sy)||solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
-  if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}draw_hud();buildChips();saveRun();prefetch(fl+1);prefetch(fl+2);if(fl<=7){if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1)}
+  if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}if(RM)RM.rows[RM.i]=curRows;draw_hud();buildChips();saveRun();viewNote();prefetchFloor(fl+1);prefetchFloor(fl+2);if(fl<=7){if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1)}
 }
 let reqLen=0;
 /* ===== 目標（記録更新・次の節目・スキンの出始め）と称号 =====
@@ -855,7 +873,7 @@ function renderGoals(){const el=$('#goalpanel'),gl=goalList(),t=myTitle();
   h+='<i class="bst" style="left:'+pos(best)+'%"></i><i class="me" style="left:'+pos(fl)+'%"></i></div>';el.innerHTML=h}
 function milestone(f){toast('<span style="color:var(--ac);font-size:17px">'+f+'F　節目</span><br><span style="font-size:13px">称号「'+titleOf(f)+'」を手に入れた</span>',3000);
   if(FXLV>0)ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>1?36:14,7)})}
-function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=CH?('🔥'+(CH.stage+1)+'/2'):fl+'F';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
+function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=CH?('🔥'+(CH.stage+1)+'/2'):fl+'F'+((RM&&RM.fl===fl)?' '+(RM.i+1)+'/'+RM.rows.length:'');$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
 function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
 function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
 function act(d){
@@ -906,6 +924,7 @@ function finish(){
   anim.done=m.res;anim.t1=performance.now();draw_hud();
   if(CH){const c=CH;if(m.res==='win'){if(c.stage===0){banner('→ 2枚目',900);setTimeout(()=>{if(CH===c)chLoad(1)},FXLV>0?500:120)}else setTimeout(()=>{if(CH===c)chWin()},FXLV>0?500:120)}
     else{ovAdd({k:'fall',t:anim.t1});banner('↓ やり直し',800);setTimeout(()=>{if(CH===c)chLoad(c.stage)},FXLV>0?450:120)}return}
+  if(m.res==='win'&&RM&&RM.fl===fl&&RM.i<RM.rows.length-1){const c=RM;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?30:10,7)});banner('→ 部屋 '+(RM.i+2)+' / '+RM.rows.length,900);setTimeout(()=>{if(RM===c&&!CH)roomNext()},FXLV>0?350:80);return}
   if(m.res==='win'){const nf=fl+1;noChestNext=hintUsed;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?40:14,7)});banner('↑ '+nf+'F',900);
     // 次の階へはすぐ切り替える（約0.18秒）。演出は新しい階の上に重ねて続き、操作は止めない
     setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});loadSoon(nf)},FXLV>0?180:40)}
@@ -914,17 +933,17 @@ function finish(){
 }
 $('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
 // 次の階を裏（Worker）で作っている最中なら、できあがるまで最大4秒待つ（間に合わせの面を出さないため）
-function loadSoon(n,t0){t0=t0||performance.now();if(n>7&&GW&&!PRE[preKey(n)])prefetch(n);const e=PRE[preKey(n)];
-  if(n>7&&GW&&e&&!e.rows&&performance.now()-t0<4000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
+function loadSoon(n,t0){t0=t0||performance.now();if(n>7&&GW)prefetchFloor(n);let pend=false;for(let i=0;i<roomsFor(n);i++){const e=PRE[preKey(n,i)];if(e&&!e.rows)pend=true}
+  if(n>7&&GW&&pend&&performance.now()-t0<4000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
 $('#reset').onclick=()=>{if(anim)return;if(CH){chLoad(CH.stage);return}load(fl,curRows)};
 $('#chx').onclick=chGiveUp;
 /* ===== 続きから遊べるように、今の階と階の形・落下回数を保存する（スキン・設定・最高到達は変更のたびに保存済み） ===== */
-function saveRun(){if(CH)return;ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall,hu:hintUsed?1:0}))}
+function saveRun(){if(CH)return;ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall,hu:hintUsed?1:0,rm:(RM&&RM.fl===fl)?{rows:RM.rows.map((r,j)=>j===RM.i?curRows:r),i:RM.i}:null}))}
 function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x==='string'&&x.length===C&&/^[.sS#oBbchGx]+$/.test(x))&&r.join('').includes('S')&&r.join('').includes('G')}
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-1642';
+const BUILD='20261103-1701';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -943,7 +962,7 @@ function remainMoves(x0,y0,h0){const seen=new Set([x0+','+y0+','+h0.slice().sort
   while(cur.length&&nodes<30000){n++;const nx=[];for(const [x,y,hs] of cur){nodes++;for(let d=0;d<4;d++){const m=move(g,hs,x,y,d);if(!m||m.res==='fall')continue;if(m.res==='win')return n;
     const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);nx.push([m.x,m.y,m.holes])}}cur=nx}
   return null}
-$('#hint').onclick=()=>{if(anim)return;if(CH){toast('挑戦中はヒントを使えない',1200);return}const n=remainMoves(S.x,S.y,S.holes);if(n===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=-1;hintUsed=true;saveRun();toast('💡 ゴールまで 最短 <span style="color:#ffd24a;font-size:22px">'+n+'</span> 手<br><span style="font-size:12px;color:#9bbbd6">いまの位置から数えた手数</span>',2800)};
+$('#hint').onclick=()=>{if(anim)return;if(CH){toast('挑戦中はヒントを使えない',1200);return}const n0=remainMoves(S.x,S.y,S.holes);if(n0===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}const later=(RM&&RM.fl===fl)?RM.rows.slice(RM.i+1).reduce((a,r)=>a+chLenOf(r),0):0;hintDir=-1;hintUsed=true;saveRun();toast('💡 ゴールまで 最短 <span style="color:#ffd24a;font-size:22px">'+(n0+later)+'</span> 手<br><span style="font-size:12px;color:#9bbbd6">'+(later?'この部屋 '+n0+'手＋あと'+(RM.rows.length-RM.i-1)+'部屋':'いまの位置から数えた手数')+'</span>',2800)};
 function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList.toggle('on',v==='dpad')}
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
 function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
@@ -968,7 +987,7 @@ function frame(now){
     if(prog>=anim.n&&!anim.fin){anim.fin=1;finish()}}
   if(anim&&anim.done){const t=Math.min(1,(now-anim.t1)/(anim.done==='fall'?350:180));if(anim.done==='fall'){scale=Math.max(.1,1-t*.9);alpha=1-t*.6}else{scale=1+Math.sin(t*3.14)*.25}}
   for(let y=0;y<R;y++)for(let x=0;x<C;x++){const ch=g[y][x];tile(ch,x,y,(ch==='c'&&vis.includes(y*C+x))?'hole':null)}
-  if(VIEW>0){for(let y=0;y<R;y++)for(let x=0;x<C;x++){const dx=Math.abs(x-pxp),dy=Math.abs(y-pyp);const d=Math.max(dx,dy);if(d>VIEW+0.01)P(x*T,y*T,T,T,'#050d16')}}
+  const VE=viewEff();if(VE>0){for(let y=0;y<R;y++)for(let x=0;x<C;x++){const dx=Math.abs(x-pxp),dy=Math.abs(y-pyp);const d=Math.max(dx,dy);if(d>VE+0.01)P(x*T,y*T,T,T,'#050d16')}}
   // 軌跡（白い1ドットの線）
   if($('#tr').value==='1'&&anim&&!anim.done){const x0=Math.round(anim.from[0]*T+8),y0=Math.round(anim.from[1]*T+8),x1=Math.round(pxp*T+8),y1=Math.round(pyp*T+8);
     P(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0)+1,Math.abs(y1-y0)+1,'rgba(255,255,255,.85)')}
@@ -997,7 +1016,9 @@ function frame(now){
   document.querySelectorAll('#leg canvas').forEach(c=>{cx=c.getContext('2d');cx.imageSmoothingEnabled=false;tile(c.dataset.k,0,0)});cx=MAIN})();
 buildIcons();buildOpts();paintIcon();renderSkins();
 {let run=null;try{run=JSON.parse(ST.get('ice_run','null'))}catch(e){}
- if(run&&run.fl>=1){fall=+run.fall||0;hintUsed=!!run.hu;load(run.fl,((run.nc?1:0)===(NOCR?1:0)&&validRows(run.rows)&&stairOpen(run.rows.map(r=>r.split('')))>=3)?run.rows:undefined)}else load(1)}
+ if(run&&run.fl>=1){fall=+run.fall||0;hintUsed=!!run.hu;const okRows=((run.nc?1:0)===(NOCR?1:0)&&validRows(run.rows)&&stairOpen(run.rows.map(r=>r.split('')))>=3);
+  if(okRows&&run.rm&&Array.isArray(run.rm.rows)&&run.rm.rows.length===roomsFor(run.fl)&&run.rm.rows.every(validRows)&&run.rm.i>=0&&run.rm.i<run.rm.rows.length)RM={fl:run.fl,rows:run.rm.rows,i:run.rm.i};
+  load(run.fl,okRows?(RM?RM.rows[RM.i]:run.rows):undefined)}else load(1)}
 requestAnimationFrame(frame);
 setTimeout(()=>{if(GRAY.length)chPrep()},4000);
 </script>
