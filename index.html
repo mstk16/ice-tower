@@ -638,16 +638,16 @@ function mixOK(L,path,early){const gg=L.g;let x=L.sx,y=L.sy,h=[],st=0,rk=0,tot=0
     x=m.x;y=m.y;h=m.holes}
   return tot<2||(rk>=1&&(early||(st>=1&&st<=Math.ceil(tot*0.7)&&rk<=Math.ceil(tot*0.7))))}
 function levelOK(L,path,lv,el,floor){if(el>2800)return true;if(!turnsOK(path))return false;if(el>2300)return true;if(!mixOK(L,path,floor<=7))return false;if(lv<2&&!isWide(L,path))return false;if(lv===0&&!perimOK(L,path))return false;return true}
-function newJob(floor){return{ext:2,floor:floor,f:Math.min(floor,10),want:pickWant(floor),work:0,near:null,nd:99,loose:null,ld:99,done:null}}
+function newJob(floor){return{ext:2,floor:floor,f:Math.min(floor,10),want:pickWant(floor),work:0,near:null,nd:99,loose:null,ld:99,any:null,ad:99,done:null}}
 // 階を作る処理を小分けにして進める（遊んでいる間に次の階を先に作っておくため）
 function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.want;
   while(performance.now()-t1<budget){const el=job.work+(performance.now()-t1);
-    if(el>3000){if(job.ext>0){job.ext--;job.work=-(performance.now()-t1);continue}job.work=el;job.done=job.near||job.loose||LEVELS[f-1].rows;return job.done}
+    if(el>3000){if(job.ext>0){job.ext--;job.work=-(performance.now()-t1);continue}job.work=el;job.done=job.near||job.loose||job.any||LEVELS[f-1].rows;return job.done}
     const fe=job.ext>0?Math.min(el,2200):el; // 作り直せる間は、条件をゆるめない
     const lv=want>=8?2:(el<800?0:el<1700?1:2); // 0=広さ＋内側で止まる手を重視 1=広さだけ 2=どちらも問わない（階段は常に外周以外）
     const sd=(Math.random()*4294967296)>>>0;const L=genBuilt(f,sd,want);if(!L)continue;
     const s=solveCount(L.g,L.sx,L.sy);if(f<=7){if(s.count<1||s.nodes>=6000)continue;const sp=shortest(L.g,L.sx,L.sy);if(!sp)continue;s.best=sp}else if(s.count!==1||s.nodes>=6000)continue;
-    const d=Math.abs(s.best.length-want);let rows=L.g.map(r=>r.join(''));
+    const d=Math.abs(s.best.length-want);let rows=L.g.map(r=>r.join(''));if(d<job.ad){job.ad=d;job.any=rows}
     if(!levelOK(L,s.best,lv,fe,f)){if(d<job.ld&&d<=(f<=7?1:2)){job.ld=d;job.loose=rows}continue}
     if(!polish(L,s.best,f,fe))continue;if(f<=7){const q=shortest(L.g,L.sx,L.sy);if(!q||Math.abs(q.length-want)>1)continue}rows=L.g.map(r=>r.join(''));if(d===0||(f<=7&&d<=1&&el>500)){job.done=rows;return rows}if(d<job.nd&&d<=(f<=7?1:2)){job.nd=d;job.near=rows}}
   job.work+=performance.now()-t1;return null}
@@ -860,7 +860,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-0814';
+const BUILD='20261103-1549';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
