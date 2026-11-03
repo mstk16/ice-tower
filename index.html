@@ -500,8 +500,8 @@ function genOne(floor,seed){const r=mkRng(seed);const rockP=0.22+Math.min(floor,
   return{g,sx,sy}}
 const STEP=5;
 const INCS=(()=>{const r=mkRng(20241102),a=[];for(let i=0;i<40;i++)a.push(r()<0.5?1:2);return a})(); // 5の倍数の階ごとの増え方（1回か2回。順番は毎回同じで、先が読みにくいようにばらつかせる）
-const MAX_LEN=11; // 7×8の盤面で「進み方が1通り」を作れる長さの上限
-function targetLen(floor){const t=Math.floor(Math.max(1,floor)/STEP);let n=4;for(let i=0;i<t;i++)n+=INCS[i%INCS.length];return Math.min(n,MAX_LEN)} // 1〜4階は4手、5の倍数の階で1〜2手ずつ増える // 5の倍数の階（5F・10F…）に着くたびに基準が1つ増える
+const MAX_LEN=12; // 7×8の盤面で「進み方が1通り」を作れる長さの上限
+function targetLen(floor){const t=Math.floor(Math.max(1,floor)/STEP);let n=4;for(let i=0;i<t;i++)n+=INCS[i%INCS.length];return Math.min(n,floor>=60?MAX_LEN:MAX_LEN-1)} // 1〜4階は4手、5の倍数の階で1〜2手ずつ増える // 5の倍数の階（5F・10F…）に着くたびに基準が1つ増える
 function pickWant(floor){const b=targetLen(floor);return(floor%STEP!==0&&Math.random()<0.25)?Math.max(3,b-1):b} // 倍数の階以外では、たまに1回少ない階
 function spreadOf(gg,sx0,sy0,path){let x=sx0,y=sy0,h=[];const cells=[[x,y]];for(const d of path){const m=move(gg,h,x,y,d);for(const t of m.trail)cells.push(t);x=m.x;y=m.y;h=m.holes}
   let a=99,b=-1,c=99,e=-1;const near=new Set();cells.forEach(([px,py])=>{a=Math.min(a,px);b=Math.max(b,px);c=Math.min(c,py);e=Math.max(e,py);for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const nx=px+dx,ny=py+dy;if(nx>=0&&ny>=0&&nx<C&&ny<R)near.add(nx+','+ny)}});
@@ -642,12 +642,12 @@ function newJob(floor){return{ext:2,floor:floor,f:Math.min(floor,10),want:pickWa
 // 階を作る処理を小分けにして進める（遊んでいる間に次の階を先に作っておくため）
 function stepJob(job,budget){const t1=performance.now();const f=job.f,want=job.want;
   while(performance.now()-t1<budget){const el=job.work+(performance.now()-t1);
-    if(el>3000){if(job.ext>0){job.ext--;job.work=-(performance.now()-t1);continue}job.work=el;job.done=job.near||job.loose||job.any||LEVELS[f-1].rows;return job.done}
+    if(el>3000){if(job.ext>0){job.ext--;job.work=-(performance.now()-t1);continue}job.work=el;job.done=job.near||job.loose||job.any||(()=>{const fp=Math.random()<0.5;return LEVELS[f-1].rows.map(r=>fp?r.split('').reverse().join(''):r)})();return job.done}
     const fe=job.ext>0?Math.min(el,2200):el; // 作り直せる間は、条件をゆるめない
     const lv=want>=8?2:(el<800?0:el<1700?1:2); // 0=広さ＋内側で止まる手を重視 1=広さだけ 2=どちらも問わない（階段は常に外周以外）
     const sd=(Math.random()*4294967296)>>>0;const L=genBuilt(f,sd,want);if(!L)continue;
     const s=solveCount(L.g,L.sx,L.sy);if(f<=7){if(s.count<1||s.nodes>=6000)continue;const sp=shortest(L.g,L.sx,L.sy);if(!sp)continue;s.best=sp}else if(s.count!==1||s.nodes>=6000)continue;
-    const d=Math.abs(s.best.length-want);let rows=L.g.map(r=>r.join(''));if(d<job.ad){job.ad=d;job.any=rows}
+    const d=Math.abs(s.best.length-want);let rows=L.g.map(r=>r.join(''));if(d<job.ad&&(f<=7||s.best.length>=want-3)){job.ad=d;job.any=rows}
     if(!levelOK(L,s.best,lv,fe,f)){if(d<job.ld&&d<=(f<=7?1:2)){job.ld=d;job.loose=rows}continue}
     if(!polish(L,s.best,f,fe))continue;if(f<=7){const q=shortest(L.g,L.sx,L.sy);if(!q||Math.abs(q.length-want)>1)continue}rows=L.g.map(r=>r.join(''));if(d===0||(f<=7&&d<=1&&el>500)){job.done=rows;return rows}if(d<job.nd&&d<=(f<=7?1:2)){job.nd=d;job.near=rows}}
   job.work+=performance.now()-t1;return null}
@@ -655,7 +655,7 @@ function genLevelBase(floor){const job=newJob(floor);let r=null;while(!(r=stepJo
 function genLevelQuick(floor){const job=newJob(floor);job.ext=0;job.work=2300;let r=null;while(!(r=stepJob(job,500)));return r} // すぐ必要なとき用（0.7秒以内。条件は少しゆるい）
 let PRE={}; // 裏で先に作っておいた階（キー→{rows}）。作るのは別スレッド（Worker）なので、遊んでいる画面は止まらない
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
-const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=11;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
+const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=12;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
   +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,reachCells,unreach,stairOpen,addDecoys,addCracks,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
   +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
 let GW=null;
@@ -680,7 +680,10 @@ function addChest(rows,floor){if(!chestPossible(floor)||Math.random()>=CHEST_RAT
   const [x,y]=c[Math.floor(Math.random()*c.length)];const r=rows.slice();r[y]=r[y].substring(0,x)+'B'+r[y].substring(x+1);return r}
 function genLevel(floor){const skip=noChestNext;noChestNext=false;const rows=takePre(floor)||genLevelQuick(floor);return skip?rows:addChest(rows,floor)} // ヒントを使ってゴールした次の階は、宝箱の抽選をしない
 function chestAt(floor){return SKINS.some(k=>k.tier>0&&k.tier<=topTier()&&MINF[k.tier]<=floor&&!OWNED.includes(k.id))}
-function pickTierAvail(floor){const ts=[];for(let t=1;t<=topTier();t++)if(MINF[t]<=floor&&unownedIn(t).length)ts.push(t);if(!ts.length)return 0;let r=Math.random()*ts.reduce((a,t)=>a+RARITY[t].w,0);for(const t of ts){r-=RARITY[t].w;if(r<0)return t}return ts[0]}
+// ランクは「その階で出るランク全部」の固定の重みで引く（低いランクをそろえても、高いランクが出やすくならない）。
+// 引いたランクがすでに全部そろっているときは、近い低いランク→なければ近い高いランクの順で、持っていないスキンを出す
+function pickTierAvail(floor){const ts=[];for(let t=1;t<=topTier();t++)if(MINF[t]<=floor)ts.push(t);if(!ts.length)return 0;let r=Math.random()*ts.reduce((a,t)=>a+RARITY[t].w,0),t0=ts[ts.length-1];for(const t of ts){r-=RARITY[t].w;if(r<0){t0=t;break}}
+  for(let t=t0;t>=1;t--)if(ts.includes(t)&&unownedIn(t).length)return t;for(let t=t0+1;t<=topTier();t++)if(ts.includes(t)&&unownedIn(t).length)return t;return 0}
 function pickUnowned(t){const u=unownedIn(t);return u[Math.floor(Math.random()*u.length)]}
 // 宝箱を1回開ける（持っていないスキンだけが出る。その階で出るランクだけ）。同じランクが5つそろったら、1つ上のランクのスキンも1つ手に入る
 function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s=pickUnowned(t);OWNED.push(s.id);const promos=[];let again=true;
@@ -848,11 +851,14 @@ function finish(){
   anim.done=m.res;anim.t1=performance.now();draw_hud();
   if(m.res==='win'){const nf=fl+1;noChestNext=hintUsed;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?40:14,7)});banner('↑ '+nf+'F',900);
     // 次の階へはすぐ切り替える（約0.18秒）。演出は新しい階の上に重ねて続き、操作は止めない
-    setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});load(nf)},FXLV>0?180:40)}
+    setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});loadSoon(nf)},FXLV>0?180:40)}
   else{fall++;const dn=Math.max(1,fl-1);ovAdd({k:'fall',t:anim.t1});banner('↓ '+dn+'F',800);
     setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});load(dn)},FXLV>0?450:120)}
 }
 $('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
+// 次の階を裏（Worker）で作っている最中なら、できあがるまで最大10秒待つ（間に合わせの面を出さないため）
+function loadSoon(n,t0){t0=t0||performance.now();if(n>7&&GW&&!PRE[preKey(n)])prefetch(n);const e=PRE[preKey(n)];
+  if(n>7&&GW&&e&&!e.rows&&performance.now()-t0<10000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
 $('#reset').onclick=()=>{if(!anim)load(fl,curRows)};
 /* ===== 続きから遊べるように、今の階と階の形・落下回数を保存する（スキン・設定・最高到達は変更のたびに保存済み） ===== */
 function saveRun(){ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall,hu:hintUsed?1:0}))}
@@ -860,7 +866,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-1623';
+const BUILD='20261103-1628';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
