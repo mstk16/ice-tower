@@ -670,12 +670,23 @@ const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const 
   +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,reachCells,unreach,stairOpen,addDecoys,addCracks,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
   +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);if(m.want)job.want=m.want;let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
 let GW=null;
-try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{GWP[0]=Math.max(0,GWP[0]-1);const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
-let GW2=null,GWP=[0,0]; // 部屋が増える階のために、作る係をもう1つ（交互に仕事を渡す）
-function gw2(){if(GW2||!GW)return GW2;try{GW2=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW2.onmessage=e=>{GWP[1]=Math.max(0,GWP[1]-1);const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW2.onerror=()=>{GW2=null}}catch(e){GW2=null}return GW2}
-function prefetch(floor,i){if(floor<1||!GW)return;const k=preKey(floor,i);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=12)delete PRE[keys[0]];PRE[k]={rows:null};
-  let w=GW,wi=0;if(roomsFor(floor)>1&&GWP[1]<GWP[0]){const b=gw2();if(b){w=b;wi=1}}
-  try{GWP[wi]++;w.postMessage({id:k,floor:floor,nc:NOCR?1:0})}catch(e){GWP[wi]=Math.max(0,GWP[wi]-1);delete PRE[k]}}
+let GW2=null,PQ=[],INF=[null,null]; // 作る順番待ち(PQ)はこちらで持ち、工房には1つずつしか渡さない＝要らなくなった分は渡す前に捨てられる
+function mkW(wi){try{const w=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));
+  w.onmessage=e=>{INF[wi]=null;const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows;pump()};
+  w.onerror=()=>{if(wi){if(GW2===w)GW2=null}else if(GW===w)GW=null;const k=INF[wi];INF[wi]=null;if(k)delete PRE[k];pump()};return w}catch(e){return null}}
+GW=mkW(0);
+function hasW(){return !!(GW||GW2)}
+function pump(){while(PQ.length&&!PRE[PQ[0].id])PQ.shift();
+  for(let wi=0;wi<2&&PQ.length;wi++){if(INF[wi]!==null)continue;let w=wi?GW2:GW;
+    if(wi&&!w&&(roomsFor(PQ[0].floor)>1||!GW))w=GW2=mkW(1);
+    if(!w)continue;const j=PQ.shift();INF[wi]=j.id;try{w.postMessage(j)}catch(e){INF[wi]=null;delete PRE[j.id]}
+    while(PQ.length&&!PRE[PQ[0].id])PQ.shift()}}
+function pruneQ(base){const ok=f=>f===1||(f>=base-1&&f<=base+2);PQ=PQ.filter(j=>{if(ok(j.floor))return true;delete PRE[j.id];return false});
+  for(let wi=0;wi<2;wi++){const k=INF[wi];if(k===null||ok(parseInt(k,10)))continue;const w=wi?GW2:GW; // 作っている最中でも、遠い階なら工房ごと止めて作り直す（高い階の仕事が低い階を待たせない）
+    delete PRE[k];INF[wi]=null;try{w&&w.terminate()}catch(e){}if(wi)GW2=null;else GW=mkW(0)}
+  pump()}
+function prefetch(floor,i){if(floor<1||!hasW())return;const k=preKey(floor,i);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=12)delete PRE[keys[0]];PRE[k]={rows:null};
+  PQ.push({id:k,floor:floor,i:i||0,nc:NOCR?1:0});PQ.sort((a,b)=>a.floor-b.floor||a.i-b.i);pump()}
 function prefetchFloor(floor){for(let i=0;i<roomsFor(floor);i++)prefetch(floor,i)}
 function takePre(floor,i){const k=preKey(floor,i),e=PRE[k];if(!e||!e.rows)return null;delete PRE[k];return e.rows}
 let curRows=null;
@@ -708,7 +719,7 @@ function autoView(f){return f>750?2:f>500?3:0}
 function viewEff(){const a=CH?0:autoView(fl);return VIEW>0&&a>0?Math.min(VIEW,a):(VIEW>0?VIEW:a)}
 let RM=null; // RM={fl,rows:[各部屋],i:いまの部屋}。部屋が1つの階はnull
 let VE0=-1;
-function viewNote(){const a=autoView(fl);if(VE0>=0&&a!==VE0&&a>0)toast('🌫 視界がせまくなった<br><span style="font-size:12px;color:#9bbbd6">'+(a===3?'7×7':'5×5')+'の範囲だけ見える</span>',2800);VE0=a}
+function viewNote(){const a=viewEff();if(VE0>=0&&a>0&&(VE0===0||a<VE0))toast('🌫 視界がせまくなった<br><span style="font-size:12px;color:#9bbbd6">'+(a*2+1)+'×'+(a*2+1)+'の範囲だけ見える</span>',2800);VE0=a}
 function genRooms(floor){const skip=noChestNext;noChestNext=false;const k=roomsFor(floor),out=[];
   for(let i=0;i<k;i++){let rows=takePre(floor,i);if(rows){stashAdd(rows);noteRecent(rows)}else{rows=floor>7?stashPick(floor):null;if(!rows)rows=genLevelQuick(floor)}out.push(rows)}
   if(!skip){const j=Math.floor(Math.random()*k);out[j]=addChest(out[j],floor)} // ヒントを使ってゴールした次の階は、宝箱の抽選をしない。宝箱は部屋のどれか1つにだけ
@@ -727,13 +738,13 @@ function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s
   saveSkins();return{s,promos}}
 /* ===== わなの宝箱: 持っているスキン（光らない★1〜★4）がランダムでグレーになる。タップして「2枚つなぎ」の激ムズステージをクリアすると、色が戻って光る ===== */
 const TRAP_P=0.12,CH_WANT=[11,12],CH_MIN=20;
-let CH=null,CHP=null,CW=null,CHT=0;const CHPRE={};
+let CH=null,CHP=null,CW=null,CHT=0,CWERR=0;function chRestore(){GRAY=[];saveFx();renderSkins();paintIcon();CWERR=0;toast('挑戦ステージを作れないので、スキンの色を戻した',2800)}const CHPRE={};
 function trapPool(){return OWNED.filter(id=>{const t=skinTier(id);return t>=1&&t<=4&&!GRAY.includes(id)&&!GLOW.includes(id)})}
-function trapRoll(){if(CH)return false;const p=trapPool();if(!p.length||Math.random()>=TRAP_P)return false;const id=p[Math.floor(Math.random()*p.length)];GRAY.push(id);if(SKIN===id){SKIN='def';ST.set('ice_skin',SKIN)}saveFx();
+function trapRoll(){if(CH||typeof Worker==='undefined')return false;const p=trapPool();if(!p.length||Math.random()>=TRAP_P)return false;const id=p[Math.floor(Math.random()*p.length)];GRAY.push(id);if(SKIN===id){SKIN='def';ST.set('ice_skin',SKIN)}saveFx();
   ovAdd({k:'fall',t:performance.now()});toast('🕸 わなの宝箱！<br>「'+SKINS.find(k=>k.id===id).name+'」がグレーになった<br><span style="font-size:12px;color:#9bbbd6">スキン一覧でタップすると、取り返しにいける</span>',3800);renderSkins();paintIcon();chPrep();return true}
 function chLenOf(rows){const gg=rows.map(r=>r.split(''));let a=0,b=0;gg.forEach((r,y)=>r.forEach((c,x)=>{if(c==='S'){a=x;b=y}}));const p=shortest(gg,a,b);return p?p.length:0}
 // 取り返し用の2枚は、遊びを止めないよう専用の別Workerで先に作っておく（最短手数の合計が20に届くまで、短いほうを作り直す）
-function chPrep(){if(CHP||CH)return;try{if(!CW){CW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));CW.onmessage=e=>chGot(e.data);CW.onerror=()=>{CW=null;CHP=null}}}catch(e){CW=null;return}
+function chPrep(){if(CHP||CH)return;try{if(!CW){CW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));CW.onmessage=e=>chGot(e.data);CW.onerror=()=>{CW=null;CHP=null;CWERR++;if(CWERR>=2&&GRAY.length&&!CH){chClose();chRestore()}else if($('#chgo')){chClose();toast('挑戦ステージを作れなかった。もう一度タップしてね',2400)}}}}catch(e){CW=null;return}
   CHP={rows:[null,null],lens:[0,0],tries:0,ok:false};chReq(0);chReq(1)}
 function chReq(i){CHPRE[i]=CHP;try{CW.postMessage({id:'ch|'+i,floor:100,nc:NOCR?1:0,want:CH_WANT[i]})}catch(e){delete CHPRE[i]}}
 function chGot(m){const i=+String(m.id).split('|')[1],gen=CHPRE[i];delete CHPRE[i];if(!gen||gen!==CHP)return;
@@ -743,15 +754,15 @@ function chGot(m){const i=+String(m.id).split('|')[1],gen=CHPRE[i];delete CHPRE[
 function chClose(){clearInterval(CHT);const m=$('#chm');m.hidden=true;m.innerHTML=''}
 function chRefresh(){const b=$('#chgo');if(!b){clearInterval(CHT);return}const ok=!!(CHP&&CHP.ok);b.disabled=!ok;b.textContent=ok?'挑戦する':'つくっています…';$('#chsum').textContent=ok?(CHP.lens[0]+CHP.lens[1]):'20以上'}
 function chAsk(id){if(anim||CH)return;const s=SKINS.find(k=>k.id===id);if(!s||!GRAY.includes(id))return;chPrep();
-  if(!CHP&&!CW){toast('この端末では、挑戦ステージを作れない',1800);return}
+  if(!CHP&&!CW){chRestore();return}
   const m=$('#chm');m.hidden=false;m.innerHTML='<div class="chb"><b>🔥 「'+s.name+'」を取り返す</b><br>2枚つなぎの激ムズステージ<br>最短手数 合計 <b id="chsum" style="color:#ffd24a">20以上</b> 手<br><small>どちらも1回で抜ける。途中で落ちたら、その面の最初から。ヒントは使えない。やめても何も失わない</small><div class="chr"><button id="chgo" type="button" disabled>つくっています…</button><button id="chno" type="button">やめる</button></div></div>';
-  $('#chno').onclick=chClose;$('#chgo').onclick=()=>{if(CHP&&CHP.ok){const sk=id;chClose();chStart(sk)}};clearInterval(CHT);CHT=setInterval(chRefresh,300);chRefresh()}
+  $('#chno').onclick=chClose;$('#chgo').onclick=()=>{if(!(CHP&&CHP.ok))return;if(anim||CH){toast('動きが止まってから、もう一度押してね',1500);return}const sk=id;chClose();chStart(sk)};clearInterval(CHT);CHT=setInterval(chRefresh,300);chRefresh()}
 function chStart(id){if(CH||anim||!CHP||!CHP.ok||!GRAY.includes(id))return;CH={id:id,stage:0,rows:CHP.rows.slice(),reqs:CHP.lens.slice(),bak:{fl:fl,rows:curRows,hu:hintUsed}};CHP=null;chPanel(false);$('#chbar').hidden=false;chLoad(0)}
 function chLoad(i){CH.stage=i;curRows=CH.rows[i].slice();g=curRows.map(r=>r.split(''));for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=CH.reqs[i];anim=null;hintDir=-1;fx=[];hintUsed=false;$('#cht').textContent='🔥 取り返し '+(i+1)+' / 2 枚目';draw_hud()}
 function chEnd(){CH=null;$('#chbar').hidden=true}
 function chPanel(open){const p=$('#skinpanel');p.hidden=!open;$('#skinbtn').classList.toggle('open',open);$('#skinbtn').setAttribute('aria-expanded',String(open));if(open)renderSkins()}
-function chGiveUp(){if(!CH)return;const b=CH.bak;chEnd();anim=null;hintUsed=b.hu;load(b.fl,validRows(b.rows)?b.rows:undefined);chPanel(true);toast('挑戦をやめた（一般ステージに戻った）',1600)}
+function chGiveUp(){if(!CH)return;const b=CH.bak;chEnd();anim=null;hintUsed=b.hu;load(b.fl,validRows(b.rows)?b.rows:undefined);chPanel(true);toast('挑戦をやめた（一般ステージに戻った）',1600);if(GRAY.length)chPrep()}
 function chWin(){const id=CH.id,b=CH.bak;GRAY=GRAY.filter(x=>x!==id);if(!GLOW.includes(id))GLOW.push(id);saveFx();chEnd();hintUsed=b.hu;load(b.fl,b.rows);
   ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>0?60:24,7)});toast('✨ 取り返した！<br>「'+SKINS.find(k=>k.id===id).name+'」の色が戻って、光るようになった',4200);chPanel(true);paintIcon();if(GRAY.length)chPrep()}
 function openChest(x,y){if(g[y][x]!=='B')return;if(hintUsed){toast('🔒 ヒントを使った階の宝箱は開かない',1600);return}g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
@@ -844,7 +855,7 @@ function load(n,rows){
   curRows=rows;g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(shortest(g,sx,sy)||solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
-  if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}if(RM)RM.rows[RM.i]=curRows;draw_hud();buildChips();saveRun();viewNote();prefetchFloor(fl+1);prefetchFloor(fl+2);if(fl<=7){if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1)}
+  if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}if(RM)RM.rows[RM.i]=curRows;draw_hud();buildChips();saveRun();viewNote();pruneQ(fl);prefetchFloor(fl+1);prefetchFloor(fl+2);if(fl<=7){if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1)}
 }
 let reqLen=0;
 /* ===== 目標（記録更新・次の節目・スキンの出始め）と称号 =====
@@ -873,7 +884,7 @@ function renderGoals(){const el=$('#goalpanel'),gl=goalList(),t=myTitle();
   h+='<i class="bst" style="left:'+pos(best)+'%"></i><i class="me" style="left:'+pos(fl)+'%"></i></div>';el.innerHTML=h}
 function milestone(f){toast('<span style="color:var(--ac);font-size:17px">'+f+'F　節目</span><br><span style="font-size:13px">称号「'+titleOf(f)+'」を手に入れた</span>',3000);
   if(FXLV>0)ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>1?36:14,7)})}
-function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=CH?('🔥'+(CH.stage+1)+'/2'):fl+'F'+((RM&&RM.fl===fl)?' '+(RM.i+1)+'/'+RM.rows.length:'');$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
+function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=CH?('🔥'+(CH.stage+1)+'/2'):fl+'F'+((RM&&RM.fl===fl)?' '+(RM.i+1)+'/'+RM.rows.length:'');$('#fl').style.cssText=(RM&&RM.fl===fl&&!CH)?'white-space:nowrap;font-size:14px':'';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
 function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
 function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
 function act(d){
@@ -933,8 +944,8 @@ function finish(){
 }
 $('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
 // 次の階を裏（Worker）で作っている最中なら、できあがるまで最大4秒待つ（間に合わせの面を出さないため）
-function loadSoon(n,t0){t0=t0||performance.now();if(n>7&&GW)prefetchFloor(n);let pend=false;for(let i=0;i<roomsFor(n);i++){const e=PRE[preKey(n,i)];if(e&&!e.rows)pend=true}
-  if(n>7&&GW&&pend&&performance.now()-t0<4000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
+function loadSoon(n,t0){t0=t0||performance.now();if(n>7&&hasW()){pruneQ(n);prefetchFloor(n)}let pend=false;for(let i=0;i<roomsFor(n);i++){const e=PRE[preKey(n,i)];if(e&&!e.rows)pend=true}
+  if(n>7&&hasW()&&pend&&performance.now()-t0<4000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
 $('#reset').onclick=()=>{if(anim)return;if(CH){chLoad(CH.stage);return}load(fl,curRows)};
 $('#chx').onclick=chGiveUp;
 /* ===== 続きから遊べるように、今の階と階の形・落下回数を保存する（スキン・設定・最高到達は変更のたびに保存済み） ===== */
@@ -943,7 +954,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-1701';
+const BUILD='20261103-1928';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -1016,8 +1027,8 @@ function frame(now){
   document.querySelectorAll('#leg canvas').forEach(c=>{cx=c.getContext('2d');cx.imageSmoothingEnabled=false;tile(c.dataset.k,0,0)});cx=MAIN})();
 buildIcons();buildOpts();paintIcon();renderSkins();
 {let run=null;try{run=JSON.parse(ST.get('ice_run','null'))}catch(e){}
- if(run&&run.fl>=1){fall=+run.fall||0;hintUsed=!!run.hu;const okRows=((run.nc?1:0)===(NOCR?1:0)&&validRows(run.rows)&&stairOpen(run.rows.map(r=>r.split('')))>=3);
-  if(okRows&&run.rm&&Array.isArray(run.rm.rows)&&run.rm.rows.length===roomsFor(run.fl)&&run.rm.rows.every(validRows)&&run.rm.i>=0&&run.rm.i<run.rm.rows.length)RM={fl:run.fl,rows:run.rm.rows,i:run.rm.i};
+ if(run&&Number.isInteger(run.fl)&&run.fl>=1&&run.fl<=100000){fall=Math.max(0,Math.floor(+run.fall||0));hintUsed=!!run.hu;const okRows=((run.nc?1:0)===(NOCR?1:0)&&validRows(run.rows)&&(()=>{const gg=run.rows.map(r=>r.split(''));for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(gg[y][x]==='S'){const p=shortest(gg,x,y);return !!(p&&p.length)}return false})());
+  if(okRows&&run.rm&&Array.isArray(run.rm.rows)&&run.rm.rows.length===roomsFor(run.fl)&&run.rm.rows.every(validRows)&&Number.isInteger(run.rm.i)&&run.rm.i>=0&&run.rm.i<run.rm.rows.length)RM={fl:run.fl,rows:run.rm.rows,i:run.rm.i};
   load(run.fl,okRows?(RM?RM.rows[RM.i]:run.rows):undefined)}else load(1)}
 requestAnimationFrame(frame);
 setTimeout(()=>{if(GRAY.length)chPrep()},4000);
