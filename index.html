@@ -72,6 +72,13 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 .sk canvas{width:40px;height:40px;border:0;background:none;border-radius:0}
 .sk.cur{border-color:var(--ac);background:#22476b}
 .sk.lock{cursor:default;color:var(--mu)}
+#chbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px;padding:6px 10px;border:2px solid #ff8a3d;background:#3a2a22;font-size:13px;font-weight:700}
+#chbar button,.chr button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;background:#1b3c5c;color:var(--tx);border:2px solid #5b86ad;border-radius:6px;cursor:pointer}
+.chr button:first-child{border-color:#ff8a3d;color:#ffb27a}.chr button:disabled{opacity:.55;cursor:default}
+#chm{position:fixed;inset:0;background:rgba(5,14,24,.8);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.chb{background:var(--card);border:3px solid #ff8a3d;padding:14px 16px;max-width:320px;text-align:center;line-height:1.7;font-size:14px}
+.chb small{color:var(--mu);font-size:11.5px}.chr{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.sk.gray em{color:#ff9a9a}
 .sk em{font-style:normal;font-size:9.5px;color:var(--mu);line-height:1.3;text-align:center}
 
 .row{display:none}
@@ -133,7 +140,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 @keyframes pz2{0%{transform:scale(1)}30%{transform:scale(1.25);border-color:#ffd24a}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#skinbtn.pulse2{animation:none}}
 </style>
-<div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div>
+<div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div><div id="chbar" hidden><span id="cht"></span><button id="chx" type="button">あきらめる</button></div><div id="chm" hidden></div>
 <div class="bar"><div class="fl" title="今の階"><span class="hl">階</span><b id="fl">1F</b></div><div title="手数"><span class="hl">手数</span><b id="mv">0</b></div><div title="穴に落ちた回数"><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
@@ -378,6 +385,10 @@ function skinParticles(id,now,cxp,cyp){if(isNS(id)){nsParticles(id,now,cxp,cyp);
 let OWNED=['def'],SKIN='def';
 try{const o=JSON.parse(ST.get('ice_skins','["def"]'));if(Array.isArray(o))OWNED=['def'].concat(o.filter(x=>x!=='def'&&SKINS.some(k=>k.id===x)))}catch(e){}
 SKIN=ST.get('ice_skin','def');if(!OWNED.includes(SKIN))SKIN='def';
+let GRAY=[],GLOW=[]; // GRAY=わなの宝箱でグレーにされたスキン／GLOW=取り返して光るようになったスキン（光るスキンは、もうグレーにされない）
+try{const b=JSON.parse(ST.get('ice_glow','[]')),a=JSON.parse(ST.get('ice_gray','[]'));if(Array.isArray(b))GLOW=[...new Set(b)].filter(x=>OWNED.includes(x)&&x!=='def');if(Array.isArray(a))GRAY=[...new Set(a)].filter(x=>OWNED.includes(x)&&x!=='def'&&!GLOW.includes(x))}catch(e){}
+function saveFx(){ST.set('ice_gray',JSON.stringify(GRAY));ST.set('ice_glow',JSON.stringify(GLOW))}
+if(GRAY.includes(SKIN)){SKIN='def';ST.set('ice_skin',SKIN)}
 let GIVEN={1:false,2:false,3:false,4:false,5:false};
 try{GIVEN=Object.assign({1:false,2:false,3:false,4:false,5:false},JSON.parse(ST.get('ice_given','{}')))}catch(e){}
 function saveSkins(){ST.set('ice_skins',JSON.stringify(OWNED));ST.set('ice_given',JSON.stringify(GIVEN))}
@@ -657,7 +668,7 @@ let PRE={}; // 裏で先に作っておいた階（キー→{rows}）。作る�
 function preKey(floor){return floor+'|'+(NOCR?1:0)}
 const GEN_SRC='const C=7,R=8,D=[[0,-1],[1,0],[0,1],[-1,0]];let NOCR=false;const STEP=5,MAX_LEN=12;const INCS='+JSON.stringify(INCS)+';const LEVELS='+JSON.stringify(LEVELS)+';'
   +[mkRng,inB,move,solveCount,crackUsed,onRingXY,genOne,targetLen,pickWant,spreadOf,genOneWide,isWide,onRing,perimOK,turnsOK,mixOK,levelOK,otherSol,genBuilt,touch,usage,nearMiss,shortest,reachCells,unreach,stairOpen,addDecoys,addCracks,polish,newJob,stepJob].map(f=>f.toString()).join('\n')
-  +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
+  +';onmessage=e=>{const m=e.data;NOCR=!!m.nc;const job=newJob(m.floor);if(m.want)job.want=m.want;let r=null;while(!(r=stepJob(job,200)));postMessage({id:m.id,rows:r})}';
 let GW=null;
 try{GW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));GW.onmessage=e=>{const m=e.data,ent=PRE[m.id];if(ent)ent.rows=m.rows};GW.onerror=()=>{GW=null}}catch(e){GW=null}
 function prefetch(floor){if(floor<1||!GW)return;const k=preKey(floor);if(PRE[k])return;const keys=Object.keys(PRE);if(keys.length>=4)delete PRE[keys[0]];PRE[k]={rows:null};try{GW.postMessage({id:k,floor:floor,nc:NOCR?1:0})}catch(e){delete PRE[k]}}
@@ -678,7 +689,15 @@ function bumpableRocks(rows){const gg=rows.map(r=>r.split(''));let x0=0,y0=0;gg.
   return [...hits].map(t=>t.split(',').map(Number))}
 function addChest(rows,floor){if(!chestPossible(floor)||Math.random()>=CHEST_RATE)return rows;const c=bumpableRocks(rows);if(!c.length)return rows;
   const [x,y]=c[Math.floor(Math.random()*c.length)];const r=rows.slice();r[y]=r[y].substring(0,x)+'B'+r[y].substring(x+1);return r}
-function genLevel(floor){const skip=noChestNext;noChestNext=false;const rows=takePre(floor)||genLevelQuick(floor);return skip?rows:addChest(rows,floor)} // ヒントを使ってゴールした次の階は、宝箱の抽選をしない
+/* ===== 作れた面の貯金: 作成が間に合わないとき、固定の面ではなく、過去に作れた良い面を（左右・上下をランダムに反転して）出す ===== */
+let STASH=[],RECENT=[];const SEEDS=[{"r":["...o.co","..o....",".s.....",".S..c.o","..G....","..o....","o..occo","..c.co."],"n":8},{"r":["c..o..s","c.o..o.",".o..oS.","c.co..o","....s..","oo.G...","..o....","o.cc..."],"n":9},{"r":["o...o.o","o......",".o..oSs","o....oc","....G.c","......c","o...o.c",".o.occ."],"n":10},{"r":[".o.cs.o",".......",".S...oo",".o..o..","..o....","...oG.o",".....o.","......."],"n":11},{"r":[".o...oo","o..o...",".so.o..",".....o.","o.G....","...sSoo",".......","......."],"n":12},{"r":["c.c..o.","oS.....","..Gc..o","....c..","o..cc..",".....s.","....o.o","o.....o"],"n":8},{"r":[".o..cso","o..ooS.","..o..co",".o.o...","....o..","o.cG.c.",".cs....","c......"],"n":9},{"r":["......o",".....Ss","o..G.oc","....oo.","...o...","....o..","o.o..o.","...o..."],"n":10},{"r":["....o..","....oS.","o..o..o","o....o.","..so..o","..G.o..",".....o.",".....c."],"n":11},{"r":[".o.s...","...c.o.","....G.o","...S...","o..o..o","oo..o..","..o..o.","...o..."],"n":12},{"r":["..os.o.","..oc..o","....o..","...S.o.","..G....",".....oo","o......","......."],"n":8},{"r":[".o..occ","o.s.c..","..o.G..",".o.o.cc",".S.....","o......","c......","......."],"n":9},{"r":[".......","....o.o","o.Go...",".......",".o...oo","..o.o..","...o.S.","s....o."],"n":10},{"r":["o...o..","..o..oo",".o.o..o",".oS...s",".......","..cG...","o......","..oo..."],"n":11},{"r":["co..o.o","...S...",".......","c...Gs.",".c.....","c..o..o","so..o..","c.o...o"],"n":8},{"r":["o..s.oo","c.c.c..","o.o..S.","...o...",".......","c..G...","..o.c..","oo.c..."],"n":9},{"r":["...o..o",".......","o......",".o..G..","oSoo...",".......","......o",".so...."],"n":10},{"r":[".so...o","....o..","oSoc.o.","co.c...","..G...o","......o","o..o...","c.c...."],"n":11},{"r":["o..o..o",".......","o....S.","s....oo","....oco","....G..",".....c.","oc.cc.o"],"n":8},{"r":["..o.o..",".o.....","..So..o","..o....",".....c.","...Go..",".....oo","o.....o"],"n":9},{"r":[".......","..oo.o.",".o..o.s","...cS.o","....oo.","o.Go...",".......","......."],"n":10},{"r":["...o..o","cc....o",".oo..oc","s.o...c","o..oG..",".oS....","......o",".c..o.."],"n":11},{"r":["..oo...","....c..","o..G...",".o.....","..oo..o","..oS...",".......","...s.o."],"n":12},{"r":["o...o..",".c.So..","o......",".o..Gso","..c...c","c....o.",".......","o....cc"],"n":8},{"r":["..o.s..","...o...","o......","o......",".o....o","..GoS..",".......","......."],"n":9},{"r":["....oo.",".......","o.....c",".c..So.",".c.o..o","c.G.o.s",".co..o.","o..o..."],"n":10},{"r":["o......",".......",".....o.","....o..","....G.o","...o...","..oSo..","o..so.."],"n":11},{"r":["s.o...o","....o..","oSoo.o.","oo..G..",".......","..c....",".......",".o....."],"n":12},{"r":[".co.c.o","...S...",".c.....","..c....","...o..o","..Gs.oo","..c....",".oo..oo"],"n":8},{"r":["..o...o",".S.c...","o...o.o",".o.o..o",".o.s.o.","...Go..",".......","......."],"n":9},{"r":["occ.c.c","....o.o",".......",".......","o.c.Soo","..Go...","....os.","oco...o"],"n":10},{"r":["o......","..o....",".o.....",".So....","oo.....","....G.o","....o..","..scso."],"n":11},{"r":["...o.os","...oS.s",".o..o..","..o..c.","o..o..o",".oG....",".......","......."],"n":12},{"r":["..oo.oc","....o..","o..G...","...o.c.","..o..S.","o..s.c.",".o.c...","...c..c"],"n":8},{"r":["....o..","...o...","....G.o","......o","....o..","....So.","o..o..s","..o.o.."],"n":9},{"r":[".....o.",".o.oS.o","o...o..","..o..o.",".o.c...",".o.G...","s......","......o"],"n":10},{"r":["os.....","..oo.o.",".oS.o..","..o...o","..Go.o.","o......",".......","......."],"n":11},{"r":["....c.o",".o.s...","o...G..",".......","o.oS...","..o...o",".o..occ","s..oc.c"],"n":8},{"r":[".o..o.c","o....oc",".S.....","..G...o",".......","..o....",".o..s..","oo..o.."],"n":9},{"r":[".o....o","o..oo..",".soo..o","..o.So.",".......","..G....","os.....","......."],"n":10},{"r":["....o..","...o..c","..o..o.",".SoGo..",".s....o",".....o.",".......","......."],"n":11},{"r":["......o","....o.s","....So.","o...o..","oo.G..o","......o",".....o.","....o.."],"n":12},{"r":["..oo...","...o.c.","o....cs",".o...c.",".....S.","..G...o",".......","o......"],"n":8},{"r":[".co....",".o.....",".c..o.o","csc.S..","..G..o.","....s.o",".co...o","..co.o."],"n":9},{"r":["o....o.",".......","o....S.",".oG..o.","o.....o","o......","..s...o","o....o."],"n":10},{"r":["o...o..",".......","..o.G..","o..o...",".o..o..","..o.o..",".S...o.","..o.so."],"n":11},{"r":["...o...","..o....","...G..o","...o...","..o.o..","..S..oc",".....s.","...o..o"],"n":12},{"r":[".......",".c...o.","..c.So.",".....oc","...o..o","..G.o.s",".....o.","c.o.c.."],"n":8},{"r":["..c.o..","o...oc.","...o...","..o..so","co...o.","..G.o..","...S..o","..c..c."],"n":9},{"r":["o..soc.","..o..oc",".o.o.S.","....o..","o.cG..o","..s....",".o..c..","..c...o"],"n":10},{"r":[".c.....",".o.....","o.S....","s.o...o",".o.oG..","...o.o.","....o..","o.o...o"],"n":11},{"r":[".....oo","....S.s",".....o.",".o..o..","o.....o","o..G.o.","......o","..o...o"],"n":12},{"r":["......o","o......","...G...",".c.oS..",".co..oo",".c..o..","....scc","oco..o."],"n":8},{"r":["c.o...c",".o.cc..",".o.c...",".So.G.o","....c.o","o..o...","....o..",".so...."],"n":9},{"r":[".......","o...o..",".....o.","....Go.","....o..","...o.S.",".so..oo","o...o.."],"n":10},{"r":[".o...o.","...o..o",".o..o..","..o.Go.","...o.o.",".....Ss",".......","......o"],"n":11},{"r":["..o....",".S.o...",".o.....",".o.....","o..oG..","s.o..o.",".o..o..","...o..."],"n":12}]; // SEEDS=最初から入れてある作成済みの面（貯金が空でも同じ面が続かないように）
+try{const a=JSON.parse(ST.get('ice_stash','[]'));if(Array.isArray(a))STASH=a.filter(e=>e&&validRows(e.r)&&e.n>=1).slice(-40)}catch(e){}
+function rowsKey(r){return r.join('|')}
+function noteRecent(rows){RECENT.push(rowsKey(rows));if(RECENT.length>10)RECENT.shift()}
+function stashAdd(rows){if(!validRows(rows))return;const k=rowsKey(rows);if(STASH.some(e=>rowsKey(e.r)===k))return;const n=chLenOf(rows);if(n<4)return;STASH.push({r:rows,n:n});if(STASH.length>40)STASH.shift();ST.set('ice_stash',JSON.stringify(STASH))}
+function stashPick(floor){const want=targetLen(floor),c=STASH.concat(SEEDS).filter(e=>e.n>=want-2&&e.n<=want+1&&!RECENT.includes(rowsKey(e.r))&&(!NOCR||!e.r.join('').includes('c')));if(c.length<3)return null;const e=c[Math.floor(Math.random()*c.length)];noteRecent(e.r);
+  let rows=e.r.slice();if(Math.random()<0.5)rows=rows.map(r=>r.split('').reverse().join(''));if(Math.random()<0.5)rows=rows.slice().reverse();return rows}
+function genLevel(floor){const skip=noChestNext;noChestNext=false;let rows=takePre(floor);if(rows){stashAdd(rows);noteRecent(rows)}else{rows=floor>7?stashPick(floor):null;if(!rows)rows=genLevelQuick(floor)}return skip?rows:addChest(rows,floor)} // ヒントを使ってゴールした次の階は、宝箱の抽選をしない
 function chestAt(floor){return SKINS.some(k=>k.tier>0&&k.tier<=topTier()&&MINF[k.tier]<=floor&&!OWNED.includes(k.id))}
 // ランクは「その階で出るランク全部」の固定の重みで引く（低いランクをそろえても、高いランクが出やすくならない）。
 // 引いたランクがすでに全部そろっているときは、近い低いランク→なければ近い高いランクの順で、持っていないスキンを出す
@@ -689,17 +708,52 @@ function pickUnowned(t){const u=unownedIn(t);return u[Math.floor(Math.random()*u
 function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s=pickUnowned(t);OWNED.push(s.id);const promos=[];let again=true;
   while(again){again=false;for(let k=1;k<PROMO_MAX;k++){if(!GIVEN[k]&&ownedIn(k)>=NEED&&unownedIn(k+1).length){GIVEN[k]=true;const rw=pickUnowned(k+1);OWNED.push(rw.id);promos.push({from:k,s:rw});again=true}}}
   saveSkins();return{s,promos}}
+/* ===== わなの宝箱: 持っているスキン（光らない★1〜★4）がランダムでグレーになる。タップして「2枚つなぎ」の激ムズステージをクリアすると、色が戻って光る ===== */
+const TRAP_P=0.12,CH_WANT=[11,12],CH_MIN=20;
+let CH=null,CHP=null,CW=null,CHT=0;const CHPRE={};
+function trapPool(){return OWNED.filter(id=>{const t=skinTier(id);return t>=1&&t<=4&&!GRAY.includes(id)&&!GLOW.includes(id)})}
+function trapRoll(){if(CH)return false;const p=trapPool();if(!p.length||Math.random()>=TRAP_P)return false;const id=p[Math.floor(Math.random()*p.length)];GRAY.push(id);if(SKIN===id){SKIN='def';ST.set('ice_skin',SKIN)}saveFx();
+  ovAdd({k:'fall',t:performance.now()});toast('🕸 わなの宝箱！<br>「'+SKINS.find(k=>k.id===id).name+'」がグレーになった<br><span style="font-size:12px;color:#9bbbd6">スキン一覧でタップすると、取り返しにいける</span>',3800);renderSkins();paintIcon();chPrep();return true}
+function chLenOf(rows){const gg=rows.map(r=>r.split(''));let a=0,b=0;gg.forEach((r,y)=>r.forEach((c,x)=>{if(c==='S'){a=x;b=y}}));const p=shortest(gg,a,b);return p?p.length:0}
+// 取り返し用の2枚は、遊びを止めないよう専用の別Workerで先に作っておく（最短手数の合計が20に届くまで、短いほうを作り直す）
+function chPrep(){if(CHP||CH)return;try{if(!CW){CW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));CW.onmessage=e=>chGot(e.data);CW.onerror=()=>{CW=null;CHP=null}}}catch(e){CW=null;return}
+  CHP={rows:[null,null],lens:[0,0],tries:0,ok:false};chReq(0);chReq(1)}
+function chReq(i){CHPRE[i]=CHP;try{CW.postMessage({id:'ch|'+i,floor:100,nc:NOCR?1:0,want:CH_WANT[i]})}catch(e){delete CHPRE[i]}}
+function chGot(m){const i=+String(m.id).split('|')[1],gen=CHPRE[i];delete CHPRE[i];if(!gen||gen!==CHP)return;
+  if(validRows(m.rows)){CHP.rows[i]=m.rows;CHP.lens[i]=chLenOf(m.rows)}else{CHP.rows[i]=null;CHP.lens[i]=0}
+  if(CHP.rows[0]&&CHP.rows[1]){if(CHP.lens[0]+CHP.lens[1]>=CH_MIN||CHP.tries>=4){CHP.ok=true}else{CHP.tries++;const j=CHP.lens[0]<=CHP.lens[1]?0:1;CHP.rows[j]=null;chReq(j)}}
+  else if(!CHP.rows[i]&&CHP.tries<4){CHP.tries++;chReq(i)}}
+function chClose(){clearInterval(CHT);const m=$('#chm');m.hidden=true;m.innerHTML=''}
+function chRefresh(){const b=$('#chgo');if(!b){clearInterval(CHT);return}const ok=!!(CHP&&CHP.ok);b.disabled=!ok;b.textContent=ok?'挑戦する':'つくっています…';$('#chsum').textContent=ok?(CHP.lens[0]+CHP.lens[1]):'20以上'}
+function chAsk(id){if(anim||CH)return;const s=SKINS.find(k=>k.id===id);if(!s||!GRAY.includes(id))return;chPrep();
+  if(!CHP&&!CW){toast('この端末では、挑戦ステージを作れない',1800);return}
+  const m=$('#chm');m.hidden=false;m.innerHTML='<div class="chb"><b>🔥 「'+s.name+'」を取り返す</b><br>2枚つなぎの激ムズステージ<br>最短手数 合計 <b id="chsum" style="color:#ffd24a">20以上</b> 手<br><small>どちらも1回で抜ける。途中で落ちたら、その面の最初から。ヒントは使えない。やめても何も失わない</small><div class="chr"><button id="chgo" type="button" disabled>つくっています…</button><button id="chno" type="button">やめる</button></div></div>';
+  $('#chno').onclick=chClose;$('#chgo').onclick=()=>{if(CHP&&CHP.ok){const sk=id;chClose();chStart(sk)}};clearInterval(CHT);CHT=setInterval(chRefresh,300);chRefresh()}
+function chStart(id){if(CH||anim||!CHP||!CHP.ok||!GRAY.includes(id))return;CH={id:id,stage:0,rows:CHP.rows.slice(),reqs:CHP.lens.slice(),bak:{fl:fl,rows:curRows,hu:hintUsed}};CHP=null;chPanel(false);$('#chbar').hidden=false;chLoad(0)}
+function chLoad(i){CH.stage=i;curRows=CH.rows[i].slice();g=curRows.map(r=>r.split(''));for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
+  S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=CH.reqs[i];anim=null;hintDir=-1;fx=[];hintUsed=false;$('#cht').textContent='🔥 取り返し '+(i+1)+' / 2 枚目';draw_hud()}
+function chEnd(){CH=null;$('#chbar').hidden=true}
+function chPanel(open){const p=$('#skinpanel');p.hidden=!open;$('#skinbtn').classList.toggle('open',open);$('#skinbtn').setAttribute('aria-expanded',String(open));if(open)renderSkins()}
+function chGiveUp(){if(!CH)return;const b=CH.bak;chEnd();anim=null;hintUsed=b.hu;load(b.fl,validRows(b.rows)?b.rows:undefined);chPanel(true);toast('挑戦をやめた（一般ステージに戻った）',1600)}
+function chWin(){const id=CH.id,b=CH.bak;GRAY=GRAY.filter(x=>x!==id);if(!GLOW.includes(id))GLOW.push(id);saveFx();chEnd();hintUsed=b.hu;load(b.fl,b.rows);
+  ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>0?60:24,7)});toast('✨ 取り返した！<br>「'+SKINS.find(k=>k.id===id).name+'」の色が戻って、光るようになった',4200);chPanel(true);paintIcon();if(GRAY.length)chPrep()}
 function openChest(x,y){if(g[y][x]!=='B')return;if(hintUsed){toast('🔒 ヒントを使った階の宝箱は開かない',1600);return}g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
+  if(trapRoll()){saveRun();return}
   const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
   const R1=RARITY[r.s.tier];ovAdd({k:'chest',t:performance.now(),cx:x*16+8,cy:y*16+8,id:r.s.id,col:R1.col,l:r.s.tier});r.promos.forEach((p,i)=>ovAdd({k:'promo',t:performance.now()+700+i*1300,id:p.s.id,col:RARITY[p.s.tier].col}));let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';
   r.promos.forEach(p=>{const R2=RARITY[p.s.tier];msg+='<br><span style="font-size:13px;color:#ffd24a">⬆ '+RARITY[p.from].star+'が'+NEED+'つそろった！ <span style="color:'+R2.col+'">'+R2.star+'</span> 「'+p.s.name+'」</span>'});
   const unlocked=checkU6();
   if(unlocked){msg+='<br><span style="font-size:14px;color:'+RARITY[6].col+'">'+RARITY[5].star+'まで、ぜんぶそろった！<br>'+RARITY[6].star+' 「'+RARITY[6].name+'」が解放された<br><span style="font-size:12px;color:#9bbbd6">'+MINF[6]+'階から、宝箱に出るよ</span></span>';ovAdd({k:'win',t:performance.now()+400,cx:56,cy:56,conf:mkConf(FXLV>0?60:24,7)})}
   toast(msg,unlocked?6500:(r.promos.length?3600:2400));renderSkins();paintIcon();saveRun()}
+function grayify(x){const im=x.getImageData(0,0,16,16),d=im.data;for(let i=0;i<d.length;i+=4){if(!d[i+3])continue;const v=Math.round((d[i]*.3+d[i+1]*.59+d[i+2]*.11)*.7+22);d[i]=d[i+1]=d[i+2]=v}x.putImageData(im,0,0)}
+function glowCard(x,now){const a=.4+.22*Math.sin(now/260),gr=x.createRadialGradient(8,8,1,8,8,9);gr.addColorStop(0,'rgba(255,240,150,'+a+')');gr.addColorStop(1,'rgba(255,240,150,0)');x.fillStyle=gr;x.fillRect(0,0,16,16);
+  for(let i=0;i<2;i++){const t=(now/420+i*.5)%1;x.fillStyle='rgba(255,255,255,'+(1-t)+')';x.fillRect(Math.round(2+i*10),Math.round(12-t*9),1,1)}}
+function glowAura(now,cxp,cyp,al){const a=(.34+.2*Math.sin(now/260))*al,gr=cx.createRadialGradient(cxp+8,cyp+8,2,cxp+8,cyp+8,13);gr.addColorStop(0,'rgba(255,240,150,'+a+')');gr.addColorStop(1,'rgba(255,240,150,0)');cx.fillStyle=gr;cx.fillRect(cxp-6,cyp-6,28,28)}
+function drawSkinCard(x,id,now){drawSkinCard0(x,id,now);if(GRAY.includes(id))grayify(x)}
 function paintIcon(){const c=$('#skinico').getContext('2d');drawSkinCard(c,SKIN,performance.now())}
 let PANEL_ANIM=[];
 // スキンの絵を1枚描く（動き・演出つき）。一覧のカードと右上のアイコンで共通
-function drawSkinCard(x,id,now){x.imageSmoothingEnabled=false;x.clearRect(0,0,16,16);const mo=skinMotion(id,now);x.save();x.globalAlpha=mo.a;x.drawImage(skinFrame(id,now),mo.dx,mo.dy);x.restore();if(skinFx(id)==='emerald'){for(let i=0;i<3;i++){const gy=((now/55+i*7)%20)-3,gx=8+Math.sin(now/500+i*1.7)*6+(i-1)*3,c=i%2?'#2fd08a':'#16b07a';x.fillStyle=c;x.fillRect(Math.round(gx),Math.round(gy),1,1);x.fillRect(Math.round(gx)+1,Math.round(gy)+1,1,1);x.fillStyle='#0f7a52';x.fillRect(Math.round(gx)+1,Math.round(gy),1,1)}}}
+function drawSkinCard0(x,id,now){x.imageSmoothingEnabled=false;x.clearRect(0,0,16,16);if(GLOW.includes(id))glowCard(x,now);const mo=skinMotion(id,now);x.save();x.globalAlpha=mo.a;x.drawImage(skinFrame(id,now),mo.dx,mo.dy);x.restore();if(skinFx(id)==='emerald'){for(let i=0;i<3;i++){const gy=((now/55+i*7)%20)-3,gx=8+Math.sin(now/500+i*1.7)*6+(i-1)*3,c=i%2?'#2fd08a':'#16b07a';x.fillStyle=c;x.fillRect(Math.round(gx),Math.round(gy),1,1);x.fillRect(Math.round(gx)+1,Math.round(gy)+1,1,1);x.fillStyle='#0f7a52';x.fillRect(Math.round(gx)+1,Math.round(gy),1,1)}}}
 setInterval(()=>{const p=document.getElementById('skinpanel');if(!p||p.hidden||!PANEL_ANIM.length)return;const n=performance.now();PANEL_ANIM.forEach(e=>drawSkinCard(e.x,e.id,n))},70);
 function renderSkins(){const el=$('#skinpanel');PANEL_ANIM=[];
   el.innerHTML='<div class="skh">スキン '+(OWNED.filter(id=>skinTier(id)<=topTier()).length-1)+' / '+(shownSkins().length-1)+'</div><div class="prg"></div><div class="skg"></div>';
@@ -709,13 +763,13 @@ function renderSkins(){const el=$('#skinpanel');PANEL_ANIM=[];
     for(let i=0;i<NEED;i++)h+='<i class="bx" style="'+(i<n?'background:'+RARITY[t].col+';border-color:'+RARITY[t].col:'')+'"></i>';
     h+='</span><span class="ar">→</span><span class="rs" style="color:'+RARITY[t+1].col+'">'+RARITY[t+1].star+(GIVEN[t]?' ✓':'')+'</span>';row.innerHTML=h;pr.appendChild(row)}
   const gr=el.querySelector('.skg');
-  shownSkins().forEach(s=>{const own=OWNED.includes(s.id);const b=document.createElement('button');b.type='button';b.className='sk'+(s.id===SKIN?' cur':'')+(own?'':' lock');
-    if(s.tier>0&&s.id!==SKIN)b.style.borderColor=RARITY[s.tier].col;
-    const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');drawSkinCard(x,s.id,0);if(own&&skinAnimated(s.id))PANEL_ANIM.push({x:x,id:s.id});
+  shownSkins().forEach(s=>{const own=OWNED.includes(s.id);const b=document.createElement('button');b.type='button';b.className='sk'+(s.id===SKIN?' cur':'')+(own?'':' lock')+(own&&GRAY.includes(s.id)?' gray':'');
+    if(s.tier>0&&s.id!==SKIN)b.style.borderColor=GRAY.includes(s.id)?'#6b7a88':RARITY[s.tier].col;
+    const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');drawSkinCard(x,s.id,0);if(own&&(skinAnimated(s.id)||GLOW.includes(s.id))&&!GRAY.includes(s.id))PANEL_ANIM.push({x:x,id:s.id});
     if(!own){x.globalCompositeOperation='source-atop';x.fillStyle='#0a1a2a';x.fillRect(0,0,16,16)}
     b.appendChild(c);const l=document.createElement('span');l.textContent=own?s.name:'？？？';b.appendChild(l);
-    if(s.tier>0){const h=document.createElement('em');h.style.color=RARITY[s.tier].col;h.textContent=RARITY[s.tier].star+(own?'':' '+MINF[s.tier]+'F〜');b.appendChild(h)}
-    b.onclick=()=>{if(!own)return;SKIN=s.id;ST.set('ice_skin',SKIN);renderSkins();paintIcon()};gr.appendChild(b)})}
+    if(s.tier>0){const h=document.createElement('em');h.style.color=RARITY[s.tier].col;h.textContent=RARITY[s.tier].star+(own?(GRAY.includes(s.id)?' 取り返す':GLOW.includes(s.id)?' ✨':''):' '+MINF[s.tier]+'F〜');b.appendChild(h)}
+    b.onclick=()=>{if(!own)return;if(GRAY.includes(s.id)){chAsk(s.id);return}SKIN=s.id;ST.set('ice_skin',SKIN);renderSkins();paintIcon()};gr.appendChild(b)})}
 /* ===== 設定は絵のボタンで選ぶ（文字でなく見た目で分かるように） ===== */
 function setIco(c){c.imageSmoothingEnabled=false}
 function icoSwipe(c){P(3,11,9,2,'#eaf6ff');P(12,9,1,6,'#eaf6ff');P(13,10,1,4,'#eaf6ff');P(14,11,1,2,'#eaf6ff');P(2,10,4,4,'#ffd24a');P(3,9,2,1,'#ffd24a');P(2,10,4,1,'#fff0a0')}
@@ -768,10 +822,11 @@ $('#gcard').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$(
 $('#skinbtn').onclick=()=>{const p=$('#skinpanel');p.hidden=!p.hidden;$('#skinbtn').classList.toggle('open',!p.hidden);$('#skinbtn').setAttribute('aria-expanded',String(!p.hidden));if(!p.hidden)renderSkins()};
 
 function load(n,rows){
+  if(CH)chEnd();
   fl=Math.max(1,n);curRows=rows||genLevel(fl);if(!rows)hintUsed=false;g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
   S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(shortest(g,sx,sy)||solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
-  if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}draw_hud();buildChips();saveRun();prefetch(fl+1);if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1);
+  if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}draw_hud();buildChips();saveRun();prefetch(fl+1);prefetch(fl+2);if(fl<=7){if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1)}
 }
 let reqLen=0;
 /* ===== 目標（記録更新・次の節目・スキンの出始め）と称号 =====
@@ -800,7 +855,7 @@ function renderGoals(){const el=$('#goalpanel'),gl=goalList(),t=myTitle();
   h+='<i class="bst" style="left:'+pos(best)+'%"></i><i class="me" style="left:'+pos(fl)+'%"></i></div>';el.innerHTML=h}
 function milestone(f){toast('<span style="color:var(--ac);font-size:17px">'+f+'F　節目</span><br><span style="font-size:13px">称号「'+titleOf(f)+'」を手に入れた</span>',3000);
   if(FXLV>0)ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>1?36:14,7)})}
-function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=fl+'F';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
+function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=CH?('🔥'+(CH.stage+1)+'/2'):fl+'F';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
 function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
 function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
 function act(d){
@@ -849,6 +904,8 @@ function finish(){
   const m=anim.m;S.x=m.x;S.y=m.y;S.holes=m.holes;S.moves++;if(m.hit&&m.res==='ok')openChest(m.hit[0],m.hit[1]);
   if(m.res==='ok'){anim=null;draw_hud();return}
   anim.done=m.res;anim.t1=performance.now();draw_hud();
+  if(CH){const c=CH;if(m.res==='win'){if(c.stage===0){banner('→ 2枚目',900);setTimeout(()=>{if(CH===c)chLoad(1)},FXLV>0?500:120)}else setTimeout(()=>{if(CH===c)chWin()},FXLV>0?500:120)}
+    else{ovAdd({k:'fall',t:anim.t1});banner('↓ やり直し',800);setTimeout(()=>{if(CH===c)chLoad(c.stage)},FXLV>0?450:120)}return}
   if(m.res==='win'){const nf=fl+1;noChestNext=hintUsed;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?40:14,7)});banner('↑ '+nf+'F',900);
     // 次の階へはすぐ切り替える（約0.18秒）。演出は新しい階の上に重ねて続き、操作は止めない
     setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});loadSoon(nf)},FXLV>0?180:40)}
@@ -856,17 +913,18 @@ function finish(){
     setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});load(dn)},FXLV>0?450:120)}
 }
 $('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
-// 次の階を裏（Worker）で作っている最中なら、できあがるまで最大10秒待つ（間に合わせの面を出さないため）
+// 次の階を裏（Worker）で作っている最中なら、できあがるまで最大4秒待つ（間に合わせの面を出さないため）
 function loadSoon(n,t0){t0=t0||performance.now();if(n>7&&GW&&!PRE[preKey(n)])prefetch(n);const e=PRE[preKey(n)];
-  if(n>7&&GW&&e&&!e.rows&&performance.now()-t0<10000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
-$('#reset').onclick=()=>{if(!anim)load(fl,curRows)};
+  if(n>7&&GW&&e&&!e.rows&&performance.now()-t0<4000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
+$('#reset').onclick=()=>{if(anim)return;if(CH){chLoad(CH.stage);return}load(fl,curRows)};
+$('#chx').onclick=chGiveUp;
 /* ===== 続きから遊べるように、今の階と階の形・落下回数を保存する（スキン・設定・最高到達は変更のたびに保存済み） ===== */
-function saveRun(){ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall,hu:hintUsed?1:0}))}
+function saveRun(){if(CH)return;ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall,hu:hintUsed?1:0}))}
 function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x==='string'&&x.length===C&&/^[.sS#oBbchGx]+$/.test(x))&&r.join('').includes('S')&&r.join('').includes('G')}
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-1628';
+const BUILD='20261103-1642';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -878,20 +936,20 @@ setInterval(()=>{if(!document.hidden)checkUpdate(false)},300000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate(false)});
 setTimeout(()=>checkUpdate(false),4000);
 function homeDisarm(){homeArm=false;clearTimeout(homeT);const b=$('#home');b.classList.remove('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.home)}
-$('#home').onclick=()=>{if(anim)return;if(!homeArm){homeArm=true;const b=$('#home');b.classList.add('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.homeok);toast('もう一度押すと、1階からやり直す',1800);homeT=setTimeout(homeDisarm,3000);return}homeDisarm();fall=0;load(1)};
+$('#home').onclick=()=>{if(anim)return;if(CH){toast('挑戦中は使えない（あきらめるを押す）',1500);return}if(!homeArm){homeArm=true;const b=$('#home');b.classList.add('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.homeok);toast('もう一度押すと、1階からやり直す',1800);homeT=setTimeout(homeDisarm,3000);return}homeDisarm();fall=0;load(1)};
 
 // ヒント: 進む向きは教えず、いまの位置からゴールまでの最短の手数だけを見せる
 function remainMoves(x0,y0,h0){const seen=new Set([x0+','+y0+','+h0.slice().sort().join('.')]);let cur=[[x0,y0,h0]],n=0,nodes=0;
   while(cur.length&&nodes<30000){n++;const nx=[];for(const [x,y,hs] of cur){nodes++;for(let d=0;d<4;d++){const m=move(g,hs,x,y,d);if(!m||m.res==='fall')continue;if(m.res==='win')return n;
     const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);nx.push([m.x,m.y,m.holes])}}cur=nx}
   return null}
-$('#hint').onclick=()=>{if(anim)return;const n=remainMoves(S.x,S.y,S.holes);if(n===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=-1;hintUsed=true;saveRun();toast('💡 ゴールまで 最短 <span style="color:#ffd24a;font-size:22px">'+n+'</span> 手<br><span style="font-size:12px;color:#9bbbd6">いまの位置から数えた手数</span>',2800)};
+$('#hint').onclick=()=>{if(anim)return;if(CH){toast('挑戦中はヒントを使えない',1200);return}const n=remainMoves(S.x,S.y,S.holes);if(n===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}hintDir=-1;hintUsed=true;saveRun();toast('💡 ゴールまで 最短 <span style="color:#ffd24a;font-size:22px">'+n+'</span> 手<br><span style="font-size:12px;color:#9bbbd6">いまの位置から数えた手数</span>',2800)};
 function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList.toggle('on',v==='dpad')}
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
 function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
 $('#vw').onchange=setView;
 $('#fx').value=String(FXLV);goalBtnFx();$('#fx').onchange=()=>{FXLV=+$('#fx').value;ST.set('ice_fx',FXLV);OV.length=0;$('#bn').classList.remove('on');goalBtnFx()};
-$('#cr').onchange=()=>{if(anim)return;NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl,curRows);toast('設定は次の階から切り替わる',1500)};
+$('#cr').onchange=()=>{if(anim)return;if(CH){$('#cr').value=NOCR?'0':'1';toast('挑戦中は変えられない',1200);return}NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl,curRows);toast('設定は次の階から切り替わる',1500)};
 document.querySelectorAll('#dp button').forEach(b=>b.onclick=()=>act(+b.dataset.d));
 addEventListener('keydown',e=>{const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(k!=null){e.preventDefault();act(k)}});
 let p0=null;
@@ -926,11 +984,11 @@ function frame(now){
   const bf=fx.find(f=>f.k==='bump');let ox=0,oy=0;if(bf){const a=1-(now-bf.t)/250;ox=Math.round(D[bf.d][0]*2*a);oy=Math.round(D[bf.d][1]*2*a)}
   const cxp=Math.round(pxp*T)+ox,cyp=Math.round(pyp*T)+oy;
   P(cxp+3,cyp+14,10,2,'rgba(0,0,0,.22)');
-  skinAura(SKIN,now,cxp,cyp,alpha);const mo=skinMotion(SKIN,now);cx.save();cx.globalAlpha=alpha*mo.a;cx.translate(cxp+8+mo.dx,cyp+8+mo.dy);cx.scale(scale,scale);cx.drawImage(skinFrame(SKIN,now),-8,-8);cx.restore();
+  if(GLOW.includes(SKIN))glowAura(now,cxp,cyp,alpha);skinAura(SKIN,now,cxp,cyp,alpha);const mo=skinMotion(SKIN,now);cx.save();cx.globalAlpha=alpha*mo.a;cx.translate(cxp+8+mo.dx,cyp+8+mo.dy);cx.scale(scale,scale);cx.drawImage(skinFrame(SKIN,now),-8,-8);cx.restore();
   skinParticles(SKIN,now,cxp,cyp);
 
   drawOV(now);
-  if(skinAnimated(SKIN)&&Math.floor(now/90)!==frame.rb){frame.rb=Math.floor(now/90);paintIcon()}
+  if((skinAnimated(SKIN)||GLOW.includes(SKIN))&&Math.floor(now/90)!==frame.rb){frame.rb=Math.floor(now/90);paintIcon()}
   requestAnimationFrame(frame);
 }
 // 凡例もドット絵で
@@ -941,5 +999,6 @@ buildIcons();buildOpts();paintIcon();renderSkins();
 {let run=null;try{run=JSON.parse(ST.get('ice_run','null'))}catch(e){}
  if(run&&run.fl>=1){fall=+run.fall||0;hintUsed=!!run.hu;load(run.fl,((run.nc?1:0)===(NOCR?1:0)&&validRows(run.rows)&&stairOpen(run.rows.map(r=>r.split('')))>=3)?run.rows:undefined)}else load(1)}
 requestAnimationFrame(frame);
+setTimeout(()=>{if(GRAY.length)chPrep()},4000);
 </script>
 </body></html>
