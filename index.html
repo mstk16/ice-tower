@@ -76,6 +76,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 #chbar button,.chr button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;background:#1b3c5c;color:var(--tx);border:2px solid #5b86ad;border-radius:6px;cursor:pointer}
 .chr button:first-child{border-color:#ff8a3d;color:#ffb27a}.chr button:disabled{opacity:.55;cursor:default}
 #coinbtn{background:#27507a;color:#ffd24a;border:0;border-radius:8px;padding:0 10px;height:34px;font-size:13px;font-weight:700;cursor:pointer;flex:none}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.ci{background:#10243a;border:2px solid #27507a;border-radius:8px;padding:4px 2px;color:#cfe6fa;font-size:11px;line-height:1.3;cursor:pointer}.ci canvas{width:44px;height:44px;display:block;margin:0 auto 2px;image-rendering:pixelated;background:none;border:0}.ci.own{border-color:#ffd24a}.ci.off{opacity:.55}.ci.arm{border-color:#ff8a3d;background:#3a2a1a}.ci i{color:#ffd24a;font-style:normal}
 #coinbtn:disabled{opacity:.5}
 #coinbtn.pulse2{animation:cpl .9s}@keyframes cpl{0%{transform:scale(1)}30%{transform:scale(1.25);background:#4a7aaa}100%{transform:scale(1)}}
 #chm .chb{max-height:calc(100vh - 24px);overflow-y:auto}
@@ -400,7 +401,8 @@ SKIN=ST.get('ice_skin','def');if(!OWNED.includes(SKIN))SKIN='def';
 /* コインの状態（load() が最初から使うので、ここで先に宣言する） */
 let COINS=+ST.get('ice_coins','0')||0;if(!(COINS>=0))COINS=0;
 const COINGOT=new Set();try{const a=JSON.parse(ST.get('ice_coinkeys','[]'));if(Array.isArray(a))a.slice(-300).forEach(k=>COINGOT.add(String(k)))}catch(e){}
-let COIN=null;const COIN_PER=70,COIN_MINF=11,COST_CHEST=15,COST_GRAY=8;
+let COIN=null;const COIN_PER=100,COIN_MINF=11;
+let COLL=[];try{const a=JSON.parse(ST.get('ice_coll','[]'));if(Array.isArray(a))COLL=[...new Set(a.map(String))]}catch(e){}
 let GRAY=[],GLOW=[]; // GRAY=わなの宝箱でグレーにされたスキン／GLOW=取り返して光るようになったスキン（光るスキンは、もうグレーにされない）
 try{const b=JSON.parse(ST.get('ice_glow','[]')),a=JSON.parse(ST.get('ice_gray','[]'));if(Array.isArray(b))GLOW=[...new Set(b)].filter(x=>OWNED.includes(x)&&x!=='def');if(Array.isArray(a))GRAY=[...new Set(a)].filter(x=>OWNED.includes(x)&&x!=='def'&&!GLOW.includes(x))}catch(e){}
 function saveFx(){ST.set('ice_gray',JSON.stringify(GRAY));ST.set('ice_glow',JSON.stringify(GLOW))}
@@ -821,7 +823,7 @@ function runOpen(){if(anim||CH||RUN)return;const b=+ST.get('ice_runbest','0')||0
   $('#rno').onclick=chClose;$('#rgo').onclick=()=>{if(anim){$('#rgo').textContent='動きが止まるまで待って';setTimeout(()=>{const b=$('#rgo');if(b)b.textContent='スタート'},1200);return}chClose();runStart(null)}}
 function runStart(bak){const b=bak||{fl:fl,rows:curRows,hu:hintUsed,RM:RM};
   RUN={n:0,falls:0,skips:0,dur:RUN_SEC*1000,pen:0,t0:performance.now(),over:false,used:[],cur:null,face:'n',faceT:0,bak:b,armQ:false};
-  RM=null;$('#runbar').hidden=false;$('#rx').textContent='やめる';clearInterval(RUNT);RUNT=setInterval(runTick,100);runNext();runTick();runTopUp()}
+  RM=null;COIN=null;$('#runbar').hidden=false;$('#rx').textContent='やめる';clearInterval(RUNT);RUNT=setInterval(runTick,100);runNext();runTick();runTopUp()}
 function runEnd(){const r=RUN;if(!r||r.over)return;r.over=true;clearInterval(RUNT);anim=null;
   const old=+ST.get('ice_runbest','0')||0,n=r.n,nb=n>old;if(nb)ST.set('ice_runbest',n);
   const m=$('#chm');m.hidden=false;
@@ -854,7 +856,7 @@ function runBack(){const r=RUN;if(!r)return;clearInterval(RUNT);RUN=null;$('#run
 $('#runbtn').onclick=runOpen;$('#coinbtn').onclick=coinOpen;coinBtn();
 $('#rskip').onclick=()=>{if(!RUN||RUN.over||anim)return;RUN.pen+=RUN_SKIP*1000;RUN.skips++;runNext();runTick()};
 $('#rx').onclick=()=>{if(!RUN||RUN.over)return;if(!RUN.armQ){const r=RUN;r.armQ=true;$('#rx').textContent='もう一度で終了';setTimeout(()=>{r.armQ=false;if(RUN===r&&!r.over)$('#rx').textContent='やめる'},2500);return}RUN.over=true;runBack()};
-/* ===== コイン: 11階から、ときどき（約14階に1回）道の途中に落ちている。いつもの最短の解の通り道にあるので、解きながら拾える（手数は増えない）。
+/* ===== コイン: 11階から、ときどき（約10階に1回）道の途中に落ちている。いつもの最短の解の通り道にあるので、解きながら拾える（手数は増えない）。
    同じ階をやり直しても出し直さない（盤面から決まる。拾った盤面は ice_coinkeys に覚える）。溜めると「宝箱」や「グレーを戻す」と交換できる ===== */
 function hashS(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function coinSave(){ST.set('ice_coins',String(COINS));ST.set('ice_coinkeys',JSON.stringify([...COINGOT].slice(-300)))}
@@ -870,19 +872,40 @@ function coinGet(){if(!COIN)return;const c=COIN;COIN=null;COINS++;COINGOT.add(c.
 function coinDraw(now){if(!COIN)return;const w=Math.abs(Math.cos(now/280)),hw=Math.max(1,Math.round(5*w)),x0=COIN.x*T+8,y0=COIN.y*T+8+Math.round(Math.sin(now/330));
   P(x0-hw-1,y0-6,hw*2+2,12,'#a56a00');P(x0-hw,y0-5,hw*2,10,'#ffd24a');if(hw>2){P(x0-hw+1,y0-4,Math.max(1,hw-1),3,'#fff3a0');P(x0-1,y0-2,2,5,'#e0a800')}
   if(Math.floor(now/500)%4===0)glintPx(x0+hw+1,y0-6,1,'#ffe680')}
-function coinOpen(){if(anim||CH||RUN)return;const m=$('#chm');m.hidden=false;
-  const ok1=COINS>=COST_CHEST,gl=GRAY.length,ok2=COINS>=COST_GRAY;
-  m.innerHTML='<div class="chb" style="border-color:#ffd24a"><b>🪙 コイン '+COINS+'枚</b><br><small>'+COIN_MINF+'階から、ときどき道の途中に落ちている。<br>いつもの最短の道にあるので、解きながら拾える</small>'
-   +'<div class="chr" style="flex-direction:column"><button id="cgc" type="button"'+(ok1?'':' disabled')+'>🎁 スキンの宝箱を開ける　🪙'+COST_CHEST+'</button>'
-   +(gl?'<button id="cgg" type="button"'+(ok2?'':' disabled')+'>🕸 グレーのスキンを1つ戻す　🪙'+COST_GRAY+'</button>':'')+'</div>'
-   +'<small>宝箱は、いまの階（'+fl+'F）で出るスキンから出る</small><div class="chr"><button id="cno" type="button">とじる</button></div></div>';
-  $('#cno').onclick=chClose;
-  $('#cgc').onclick=()=>{if(anim||COINS<COST_CHEST)return;const r=rollChest(fl);if(!r){toast('📦 いまの階では、出るスキンがない<br><span style="font-size:12px;color:#9bbbd6">もっと高い階か、まだ持っていないスキンの出る階で</span>',2400);return}
-    COINS-=COST_CHEST;coinSave();coinBtn();chClose();const R1=RARITY[r.s.tier];ovAdd({k:'chest',t:performance.now(),cx:56,cy:56,id:r.s.id,col:R1.col,l:r.s.tier});r.promos.forEach((p,i)=>ovAdd({k:'promo',t:performance.now()+700+i*1300,id:p.s.id,col:RARITY[p.s.tier].col}));
-    let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';r.promos.forEach(p=>{const R2=RARITY[p.s.tier];msg+='<br><span style="font-size:13px;color:#ffd24a">⬆ '+RARITY[p.from].star+'が'+NEED+'つそろった！ <span style="color:'+R2.col+'">'+R2.star+'</span> 「'+p.s.name+'」</span>'});
-    const un=checkU6();if(un)msg+='<br><span style="font-size:14px;color:'+RARITY[6].col+'">'+RARITY[6].star+' 「'+RARITY[6].name+'」が解放された</span>';
-    toast(msg,un?5000:(r.promos.length?3600:2400));renderSkins();paintIcon();saveRun()};
-  if(gl)$('#cgg').onclick=()=>{if(anim||COINS<COST_GRAY||!GRAY.length)return;const id=GRAY[GRAY.length-1];GRAY=GRAY.filter(x=>x!==id);COINS-=COST_GRAY;coinSave();coinBtn();saveFx();chClose();renderSkins();paintIcon();toast('🕸 「'+SKINS.find(k=>k.id===id).name+'」の色が戻った',1800)}}
+/* ===== 氷の置物（コレクション）: コインと交換する。ランダムではなく、ほしいものを選んで交換（5/10/20枚）。スキンとは別の集め物 ===== */
+const CPAL={K:'#1a2a44',W:'#f4fbff',L:'#bfe6ff',B:'#5aaee8',D:'#2a6aa8',Y:'#ffd24a',O:'#ff8a2a',R:'#e0443c',P:'#ffb0c8',G:'#5ad18a',S:'#aab6c6',N:'#8a5a2b',V:'#b07aff'};
+const COLLS=[
+ {id:'flake',name:'雪の結晶',cost:5,v:1,rows:[".......W","..L....W","...L...W","....L..W",".....L.W","......LW",".......W",".WWWWWWW"]},
+ {id:'shard',name:'氷のかけら',cost:5,rows:["........","........","...KKKKK","..KLLWWW",".KLLWWWW","KKKKKKKK",".KBLLLLL","..KBLLLL","...KBBLL","....KBBB",".....KBB","......KD",".......K","........"]},
+ {id:'egg',name:'ペンギンのたまご',cost:5,rows:["........","......KK",".....KWW","....KWWW","...KWWWW","...KWBWW","..KWWWWW","..KWWWBW","..KWWWWW","..KLWWWW","...KLLWW","...KLLLL","..KNNNNN","...KKKKK"]},
+ {id:'icicle',name:'つらら',cost:5,rows:["KKKKKKKK","KWWWWWWW","..LL..LL","..LL..LL","..BL..LL","..BL..BL","...L..BL","...B..BL",".......B",".......B"]},
+ {id:'star',name:'北極星',cost:10,v:1,rows:[".......Y",".......Y","......YY","......YW",".....YWW","..YYYYWW","YYYYYWWW","YYYYYYWW"]},
+ {id:'bunny',name:'ゆきうさぎ',cost:10,rows:["....KK..","...KWWK.","...KWPK.","...KWPK.","...KWWK.","..KKWWKK","..KWWWWW",".KWWWWWW",".KWKWWWW",".KWWWWWP",".KWWWWWW","..KWWWWW","..KWWWWW",".KWWWWWW",".KKKKKKK"]},
+ {id:'lantern',name:'ランタン',cost:10,rows:["......KK",".....K..","....KKKK","...KSSSS","...KYYWW","..KKYWWW","..KYYWWW","..KYWWWW","..KYWWWW","..KYYWWW","..KKYYWW","...KSSSS","...KKKKK"]},
+ {id:'chest',name:'たからばこ',cost:10,rows:["..KKKKKK",".KNNNNNN",".KNDNNNN","KKKKKKYY","KNNNNKYY","KNNNNKYK","KNNNNKYY","KNDNNNNN","KNNNNNNN","KKKKKKKK"]},
+ {id:'crown',name:'氷の王冠',cost:20,rows:[".K.....K",".KK...KK",".KLK.KLK",".KLLKLLK",".KLLLLLK",".KLWLWLK",".KLLLLLL",".KBBBBBB",".KKKKKKK"]},
+ {id:'aurora',name:'オーロラのびん',cost:20,rows:["....KKKK","....KNNN","...KKKKK","..KWGGGG",".KWGGGGG",".KWBBBBB",".KWBBBBB",".KWVVVVV",".KWVVVVV",".KWPPPPP","..KKPPPP","...KKKKK"]},
+ {id:'heart',name:'氷のハート',cost:20,rows:["........","..KKKK..",".KLWLLK.","KLWLLLLK","KLLLLLLL","KLLLLLLL",".KLLLLLL","..KLLLLB","...KLLLB","....KLBB",".....KBB","......KB",".......K"]},
+ {id:'snowman',name:'ゆきだるま',cost:20,rows:[".....KKK","....KWWW","....KWKW","....KWWO","....KRRR","..KKWWWW",".KWWWWWW",".KWWWWWK",".KWWWWWW",".KWWWWWK",".KWWWWWW","..KKWWWW","....KKKK"]}];
+const _cc={};
+function collCanvas(it,dim){const k=it.id+(dim?'d':'');if(_cc[k])return _cc[k];const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');
+  let rows=it.rows;if(it.v)rows=rows.concat(rows.slice().reverse());const top=Math.floor((16-rows.length)/2);
+  rows.forEach((row,y)=>{for(let i=0;i<8;i++){const ch=row[i];if(!ch||ch==='.')continue;x.fillStyle=dim?'#3a5a80':CPAL[ch];x.fillRect(i,top+y,1,1);x.fillRect(15-i,top+y,1,1)}});return _cc[k]=c}
+function collSave(){ST.set('ice_coll',JSON.stringify(COLL))}
+function coinOpen(){if(anim||CH||RUN)return;const m=$('#chm');m.hidden=false;let armed=null;
+  const draw=()=>{const n=COLLS.filter(i=>COLL.includes(i.id)).length;
+    m.innerHTML='<div class="chb" style="border-color:#ffd24a"><b>🪙 コイン '+COINS+'枚</b>　<small>氷の置物 '+n+' / '+COLLS.length+'</small><br><small>'+COIN_MINF+'階から、ときどき道の途中に落ちている。<br>ほしい置物を選んで交換（ランダムではない）</small><div class="cgrid"></div><div class="chr"><button id="cno" type="button">とじる</button></div></div>';
+    const gr=m.querySelector('.cgrid');
+    COLLS.forEach(it=>{const own=COLL.includes(it.id),can=COINS>=it.cost,b=document.createElement('button');b.type='button';b.className='ci'+(own?' own':'')+(!own&&!can?' off':'')+(armed===it.id?' arm':'');
+      const cv=document.createElement('canvas');cv.width=16;cv.height=16;cv.getContext('2d').drawImage(collCanvas(it,!own),0,0);b.appendChild(cv);
+      const t=document.createElement('span');t.innerHTML=own?it.name+'<br><i>✓</i>':armed===it.id?'もう一度で交換':it.name+'<br>🪙'+it.cost;b.appendChild(t);
+      b.onclick=()=>{if(own)return;if(!can){toast('コインが足りない（あと'+(it.cost-COINS)+'枚）',1400);return}
+        if(armed!==it.id){armed=it.id;draw();return}
+        COINS-=it.cost;COLL.push(it.id);coinSave();collSave();coinBtn();armed=null;draw();toast('🧊 「'+it.name+'」を手に入れた！',1800);
+        if(COLLS.every(i=>COLL.includes(i.id)))toast('🧊 氷の置物が、ぜんぶそろった！',3200)};
+      gr.appendChild(b)});
+    $('#cno').onclick=chClose};
+  draw()}
 function openChest(x,y){if(g[y][x]!=='B')return;if(hintUsed){toast('🔒 ヒントを使った階の宝箱は開かない',1600);return}g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
   if(trapRoll()){saveRun();return}
   const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
@@ -1076,7 +1099,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261108-0648';
+const BUILD='20261108-0657';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
