@@ -75,6 +75,9 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 #chbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px;padding:6px 10px;border:2px solid #ff8a3d;background:#3a2a22;font-size:13px;font-weight:700}
 #chbar button,.chr button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;background:#1b3c5c;color:var(--tx);border:2px solid #5b86ad;border-radius:6px;cursor:pointer}
 .chr button:first-child{border-color:#ff8a3d;color:#ffb27a}.chr button:disabled{opacity:.55;cursor:default}
+#coinbtn{background:#27507a;color:#ffd24a;border:0;border-radius:8px;padding:0 10px;height:34px;font-size:13px;font-weight:700;cursor:pointer;flex:none}
+#coinbtn:disabled{opacity:.5}
+#coinbtn.pulse2{animation:cpl .9s}@keyframes cpl{0%{transform:scale(1)}30%{transform:scale(1.25);background:#4a7aaa}100%{transform:scale(1)}}
 #chm .chb{max-height:calc(100vh - 24px);overflow-y:auto}
 #runbtn{margin-left:auto;font:inherit;font-size:13px;font-weight:700;padding:8px 10px;background:#12304d;color:var(--tx);border:2px solid #4aa3ff;border-radius:8px;cursor:pointer;flex:none}
 #runbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:8px;margin:0 0 6px;padding:6px 8px;border:2px solid #4aa3ff;background:#12304d;font-size:13px;font-weight:700}
@@ -149,7 +152,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 @keyframes pz2{0%{transform:scale(1)}30%{transform:scale(1.25);border-color:#ffd24a}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#skinbtn.pulse2{animation:none}}
 </style>
-<div class="top"><h1>🧊 氷の塔</h1><button id="runbtn" type="button" aria-label="60秒駆け上がり" title="60秒駆け上がり">⏱ 60秒</button><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div><div id="chbar" hidden><span id="cht"></span><button id="chx" type="button">あきらめる</button></div><div id="runbar" hidden><canvas id="rmas" width="16" height="16"></canvas><div class="rtm"><i id="rtmi"></i><span><span id="rsec" style="position:static;display:inline">60</span>秒</span></div><button id="rskip" type="button">とばす −3秒</button><button id="rx" type="button">やめる</button></div><div id="chm" hidden></div>
+<div class="top"><h1>🧊 氷の塔</h1><button id="runbtn" type="button" aria-label="60秒駆け上がり" title="60秒駆け上がり">⏱ 60秒</button><button id="coinbtn" type="button" aria-label="コインを使う" title="コインを使う">🪙 0</button><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div><div id="chbar" hidden><span id="cht"></span><button id="chx" type="button">あきらめる</button></div><div id="runbar" hidden><canvas id="rmas" width="16" height="16"></canvas><div class="rtm"><i id="rtmi"></i><span><span id="rsec" style="position:static;display:inline">60</span>秒</span></div><button id="rskip" type="button">とばす −3秒</button><button id="rx" type="button">やめる</button></div><div id="chm" hidden></div>
 <div class="bar"><div class="fl" title="今の階"><span class="hl">階</span><b id="fl">1F</b></div><div title="手数"><span class="hl">手数</span><b id="mv">0</b></div><div title="穴に落ちた回数"><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
@@ -394,6 +397,10 @@ function skinParticles(id,now,cxp,cyp){if(isNS(id)){nsParticles(id,now,cxp,cyp);
 let OWNED=['def'],SKIN='def';
 try{const o=JSON.parse(ST.get('ice_skins','["def"]'));if(Array.isArray(o))OWNED=['def'].concat(o.filter(x=>x!=='def'&&SKINS.some(k=>k.id===x)))}catch(e){}
 SKIN=ST.get('ice_skin','def');if(!OWNED.includes(SKIN))SKIN='def';
+/* コインの状態（load() が最初から使うので、ここで先に宣言する） */
+let COINS=+ST.get('ice_coins','0')||0;if(!(COINS>=0))COINS=0;
+const COINGOT=new Set();try{const a=JSON.parse(ST.get('ice_coinkeys','[]'));if(Array.isArray(a))a.slice(-300).forEach(k=>COINGOT.add(String(k)))}catch(e){}
+let COIN=null;const COIN_PER=70,COIN_MINF=11,COST_CHEST=15,COST_GRAY=8;
 let GRAY=[],GLOW=[]; // GRAY=わなの宝箱でグレーにされたスキン／GLOW=取り返して光るようになったスキン（光るスキンは、もうグレーにされない）
 try{const b=JSON.parse(ST.get('ice_glow','[]')),a=JSON.parse(ST.get('ice_gray','[]'));if(Array.isArray(b))GLOW=[...new Set(b)].filter(x=>OWNED.includes(x)&&x!=='def');if(Array.isArray(a))GRAY=[...new Set(a)].filter(x=>OWNED.includes(x)&&x!=='def'&&!GLOW.includes(x))}catch(e){}
 function saveFx(){ST.set('ice_gray',JSON.stringify(GRAY));ST.set('ice_glow',JSON.stringify(GLOW))}
@@ -844,9 +851,38 @@ function runCardShare(n,nb,r){const b=$('#rimg'),c=runCard(n,nb,r),t='🧊氷の
     try{const f=new File([bl],'ice_tower_'+n+'F.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],text:t}).catch(()=>{});return}}catch(e){}
     try{const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='ice_tower_'+n+'F.png';document.body.appendChild(a);a.click();a.remove();b.textContent='画像を保存した'}catch(e){b.textContent='保存できなかった'}},'image/png')}
 function runBack(){const r=RUN;if(!r)return;clearInterval(RUNT);RUN=null;$('#runbar').hidden=true;anim=null;const b=r.bak;RM=b.RM;hintUsed=b.hu;load(b.fl,validRows(b.rows)?b.rows:undefined)}
-$('#runbtn').onclick=runOpen;
+$('#runbtn').onclick=runOpen;$('#coinbtn').onclick=coinOpen;coinBtn();
 $('#rskip').onclick=()=>{if(!RUN||RUN.over||anim)return;RUN.pen+=RUN_SKIP*1000;RUN.skips++;runNext();runTick()};
 $('#rx').onclick=()=>{if(!RUN||RUN.over)return;if(!RUN.armQ){const r=RUN;r.armQ=true;$('#rx').textContent='もう一度で終了';setTimeout(()=>{r.armQ=false;if(RUN===r&&!r.over)$('#rx').textContent='やめる'},2500);return}RUN.over=true;runBack()};
+/* ===== コイン: 11階から、ときどき（約14階に1回）道の途中に落ちている。いつもの最短の解の通り道にあるので、解きながら拾える（手数は増えない）。
+   同じ階をやり直しても出し直さない（盤面から決まる。拾った盤面は ice_coinkeys に覚える）。溜めると「宝箱」や「グレーを戻す」と交換できる ===== */
+function hashS(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function coinSave(){ST.set('ice_coins',String(COINS));ST.set('ice_coinkeys',JSON.stringify([...COINGOT].slice(-300)))}
+function coinBtn(){const b=$('#coinbtn');if(b)b.textContent='🪙 '+COINS}
+function coinSet(){COIN=null;if(CH||RUN||fl<COIN_MINF)return;const key=fl+'|'+curRows.join('').replace(/b/g,'B');if(COINGOT.has(key))return;const h=hashS(key);if(h%1000>=COIN_PER)return;
+  const path=shortest(g,sx,sy);if(!path||!path.length)return;const cells=[],seen=new Set();let x=sx,y=sy,hs=[];
+  for(const d of path){const m=move(g,hs,x,y,d);if(!m)break;for(const [a,b] of m.trail)if(g[b][a]==='.'&&!seen.has(a+','+b)){seen.add(a+','+b);cells.push([a,b])}x=m.x;y=m.y;hs=m.holes}
+  if(!cells.length)return;const c=cells[(h>>>10)%cells.length];COIN={x:c[0],y:c[1],key}}
+function coinGet(){if(!COIN)return;const c=COIN;COIN=null;COINS++;COINGOT.add(c.key);coinSave();coinBtn();
+  const b=$('#coinbtn');if(b){b.classList.remove('pulse2');void b.offsetWidth;b.classList.add('pulse2');setTimeout(()=>b.classList.remove('pulse2'),900)}
+  ovAdd({k:'win',t:performance.now(),cx:c.x*16+8,cy:c.y*16+8,conf:mkConf(FXLV>0?14:6,c.x+c.y*9)});
+  toast('🪙 コインをひろった！（'+COINS+'）'+(COINS===1?'<br><span style="font-size:12px;color:#9bbbd6">右上の🪙で、宝箱などと交換できる</span>':''),COINS===1?2800:1200)}
+function coinDraw(now){if(!COIN)return;const w=Math.abs(Math.cos(now/280)),hw=Math.max(1,Math.round(5*w)),x0=COIN.x*T+8,y0=COIN.y*T+8+Math.round(Math.sin(now/330));
+  P(x0-hw-1,y0-6,hw*2+2,12,'#a56a00');P(x0-hw,y0-5,hw*2,10,'#ffd24a');if(hw>2){P(x0-hw+1,y0-4,Math.max(1,hw-1),3,'#fff3a0');P(x0-1,y0-2,2,5,'#e0a800')}
+  if(Math.floor(now/500)%4===0)glintPx(x0+hw+1,y0-6,1,'#ffe680')}
+function coinOpen(){if(anim||CH||RUN)return;const m=$('#chm');m.hidden=false;
+  const ok1=COINS>=COST_CHEST,gl=GRAY.length,ok2=COINS>=COST_GRAY;
+  m.innerHTML='<div class="chb" style="border-color:#ffd24a"><b>🪙 コイン '+COINS+'枚</b><br><small>'+COIN_MINF+'階から、ときどき道の途中に落ちている。<br>いつもの最短の道にあるので、解きながら拾える</small>'
+   +'<div class="chr" style="flex-direction:column"><button id="cgc" type="button"'+(ok1?'':' disabled')+'>🎁 スキンの宝箱を開ける　🪙'+COST_CHEST+'</button>'
+   +(gl?'<button id="cgg" type="button"'+(ok2?'':' disabled')+'>🕸 グレーのスキンを1つ戻す　🪙'+COST_GRAY+'</button>':'')+'</div>'
+   +'<small>宝箱は、いまの階（'+fl+'F）で出るスキンから出る</small><div class="chr"><button id="cno" type="button">とじる</button></div></div>';
+  $('#cno').onclick=chClose;
+  $('#cgc').onclick=()=>{if(anim||COINS<COST_CHEST)return;const r=rollChest(fl);if(!r){toast('📦 いまの階では、出るスキンがない<br><span style="font-size:12px;color:#9bbbd6">もっと高い階か、まだ持っていないスキンの出る階で</span>',2400);return}
+    COINS-=COST_CHEST;coinSave();coinBtn();chClose();const R1=RARITY[r.s.tier];ovAdd({k:'chest',t:performance.now(),cx:56,cy:56,id:r.s.id,col:R1.col,l:r.s.tier});r.promos.forEach((p,i)=>ovAdd({k:'promo',t:performance.now()+700+i*1300,id:p.s.id,col:RARITY[p.s.tier].col}));
+    let msg='🎁 <span style="color:'+R1.col+'">'+R1.star+'</span> 「'+r.s.name+'」をゲット！';r.promos.forEach(p=>{const R2=RARITY[p.s.tier];msg+='<br><span style="font-size:13px;color:#ffd24a">⬆ '+RARITY[p.from].star+'が'+NEED+'つそろった！ <span style="color:'+R2.col+'">'+R2.star+'</span> 「'+p.s.name+'」</span>'});
+    const un=checkU6();if(un)msg+='<br><span style="font-size:14px;color:'+RARITY[6].col+'">'+RARITY[6].star+' 「'+RARITY[6].name+'」が解放された</span>';
+    toast(msg,un?5000:(r.promos.length?3600:2400));renderSkins();paintIcon();saveRun()};
+  if(gl)$('#cgg').onclick=()=>{if(anim||COINS<COST_GRAY||!GRAY.length)return;const id=GRAY[GRAY.length-1];GRAY=GRAY.filter(x=>x!==id);COINS-=COST_GRAY;coinSave();coinBtn();saveFx();chClose();renderSkins();paintIcon();toast('🕸 「'+SKINS.find(k=>k.id===id).name+'」の色が戻った',1800)}}
 function openChest(x,y){if(g[y][x]!=='B')return;if(hintUsed){toast('🔒 ヒントを使った階の宝箱は開かない',1600);return}g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
   if(trapRoll()){saveRun();return}
   const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
@@ -936,7 +972,7 @@ function load(n,rows){
   fl=Math.max(1,n);if(!rows){const rr=genRooms(fl);RM=rr.length>1?{fl:fl,rows:rr,i:0}:null;rows=rr[0];hintUsed=false}else if(!(RM&&RM.fl===fl))RM=null;
   curRows=rows;g=curRows.map(r=>r.split(''));
   for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
-  S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(shortest(g,sx,sy)||solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];
+  S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=(shortest(g,sx,sy)||solveCount(g,sx,sy).best||[]).length;anim=null;hintDir=-1;fx=[];coinSet();
   if(fl>best){const ms=fl%MS_STEP===0;if(fl>1)recFx();best=fl;ST.set(bestKey(),best);if(ms)milestone(fl)}if(RM)RM.rows[RM.i]=curRows;draw_hud();buildChips();saveRun();viewNote();pruneQ(fl);prefetchFloor(fl+1);prefetchFloor(fl+2);if(fl<=7){if(!NOCR&&fl>1)prefetch(fl-1);if(fl>1)prefetch(1)}
 }
 let reqLen=0;
@@ -1040,7 +1076,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261108-0619';
+const BUILD='20261108-0648';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -1081,9 +1117,11 @@ function frame(now){
   if(anim){const sp=75;const prog=Math.max(0,Math.min(anim.n,(now-anim.t0)/sp));const i=Math.floor(prog),f=prog-i;
     const a=anim.m.trail[i],b=anim.m.trail[Math.min(i+1,anim.n)];pxp=a[0]+(b[0]-a[0])*f;pyp=a[1]+(b[1]-a[1])*f;sparkle=!anim.done;
     vis=S.holes.slice();for(let k=0;k<Math.floor(prog+0.0001);k++){const [tx,ty]=anim.m.trail[k];if(g[ty][tx]==='c'&&!vis.includes(ty*C+tx))vis.push(ty*C+tx)}
+    if(COIN&&!CH&&!RUN){for(let k=0;k<=i&&k<=anim.n;k++){const t=anim.m.trail[k];if(t[0]===COIN.x&&t[1]===COIN.y){coinGet();break}}}
     if(prog>=anim.n&&!anim.fin){anim.fin=1;finish()}}
   if(anim&&anim.done){const t=Math.min(1,(now-anim.t1)/(anim.done==='fall'?350:180));if(anim.done==='fall'){scale=Math.max(.1,1-t*.9);alpha=1-t*.6}else{scale=1+Math.sin(t*3.14)*.25}}
   for(let y=0;y<R;y++)for(let x=0;x<C;x++){const ch=g[y][x];tile(ch,x,y,(ch==='c'&&vis.includes(y*C+x))?'hole':null)}
+  if(COIN&&!CH&&!RUN)coinDraw(now);
   const VE=viewEff();if(VE>0){for(let y=0;y<R;y++)for(let x=0;x<C;x++){const dx=Math.abs(x-pxp),dy=Math.abs(y-pyp);const d=Math.max(dx,dy);if(d>VE+0.01)P(x*T,y*T,T,T,'#050d16')}}
   // 軌跡（白い1ドットの線）
   if($('#tr').value==='1'&&anim&&!anim.done){const x0=Math.round(anim.from[0]*T+8),y0=Math.round(anim.from[1]*T+8),x1=Math.round(pxp*T+8),y1=Math.round(pyp*T+8);
