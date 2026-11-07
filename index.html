@@ -75,6 +75,15 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 #chbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px;padding:6px 10px;border:2px solid #ff8a3d;background:#3a2a22;font-size:13px;font-weight:700}
 #chbar button,.chr button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;background:#1b3c5c;color:var(--tx);border:2px solid #5b86ad;border-radius:6px;cursor:pointer}
 .chr button:first-child{border-color:#ff8a3d;color:#ffb27a}.chr button:disabled{opacity:.55;cursor:default}
+#chm .chb{max-height:calc(100vh - 24px);overflow-y:auto}
+#runbtn{margin-left:auto;font:inherit;font-size:13px;font-weight:700;padding:8px 10px;background:#12304d;color:var(--tx);border:2px solid #4aa3ff;border-radius:8px;cursor:pointer;flex:none}
+#runbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:8px;margin:0 0 6px;padding:6px 8px;border:2px solid #4aa3ff;background:#12304d;font-size:13px;font-weight:700}
+#runbar[hidden]{display:none}
+#rmas,#rmas2{image-rendering:pixelated}#rmas{width:36px;height:36px;flex:none}
+#rmas.bounce{animation:rbn .35s}
+@keyframes rbn{0%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+.rtm{position:relative;flex:1;height:22px;background:#0a1a2a;border-radius:4px;overflow:hidden;min-width:60px}.rtm i{display:block;height:100%;width:100%;background:#ffd24a}.rtm span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;text-shadow:0 1px 2px #000}
+#runbar button{font:inherit;font-size:12px;font-weight:700;padding:6px 8px;background:#1b3c5c;color:var(--tx);border:2px solid #5b86ad;border-radius:6px;cursor:pointer;flex:none}
 #chm{position:fixed;inset:0;background:rgba(5,14,24,.8);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
 .chb{background:var(--card);border:3px solid #ff8a3d;padding:14px 16px;max-width:320px;text-align:center;line-height:1.7;font-size:14px}
 .chb small{color:var(--mu);font-size:11.5px}.chr{display:flex;gap:8px;justify-content:center;margin-top:10px}
@@ -140,7 +149,7 @@ canvas{width:100%;display:block;touch-action:none;background:#0a1a2a;image-rende
 @keyframes pz2{0%{transform:scale(1)}30%{transform:scale(1.25);border-color:#ffd24a}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#skinbtn.pulse2{animation:none}}
 </style>
-<div class="top"><h1>🧊 氷の塔</h1><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div><div id="chbar" hidden><span id="cht"></span><button id="chx" type="button">あきらめる</button></div><div id="chm" hidden></div>
+<div class="top"><h1>🧊 氷の塔</h1><button id="runbtn" type="button" aria-label="60秒駆け上がり" title="60秒駆け上がり">⏱ 60秒</button><button id="skinbtn" type="button" aria-label="スキンを変える" title="スキンを変える"><canvas id="skinico" width="16" height="16"></canvas></button></div><div id="skinpanel" hidden></div><div id="chbar" hidden><span id="cht"></span><button id="chx" type="button">あきらめる</button></div><div id="runbar" hidden><canvas id="rmas" width="16" height="16"></canvas><div class="rtm"><i id="rtmi"></i><span><span id="rsec" style="position:static;display:inline">60</span>秒</span></div><button id="rskip" type="button">とばす −3秒</button><button id="rx" type="button">やめる</button></div><div id="chm" hidden></div>
 <div class="bar"><div class="fl" title="今の階"><span class="hl">階</span><b id="fl">1F</b></div><div title="手数"><span class="hl">手数</span><b id="mv">0</b></div><div title="穴に落ちた回数"><span class="hl">落下</span><b id="fa">0</b></div><div id="gcard" role="button" tabindex="0" aria-label="目標と称号を見る" title="目標と称号を見る"><span class="hl">最高</span><b id="bs">1F</b><span id="gtx"></span><i id="gbr"><u></u></i></div></div>
 <div class="wrap"><canvas id="cv" width="112" height="128"></canvas><div id="toast"></div><div id="bn"></div></div>
 <div class="dpad" id="dp"><span></span><button data-d="0" aria-label="上"><canvas class="ar" data-a="0"></canvas></button><span></span><button data-d="3" aria-label="左"><canvas class="ar" data-a="3"></canvas></button><button data-d="2" aria-label="下"><canvas class="ar" data-a="2"></canvas></button><button data-d="1" aria-label="右"><canvas class="ar" data-a="1"></canvas></button></div>
@@ -716,7 +725,7 @@ function stashPick(floor){const want=targetLen(floor),c=STASH.concat(SEEDS).filt
 /* ===== 高い階は「部屋をつなぐ」: 151階から2部屋・241階から3部屋・331階から4部屋。視界は501階から7×7・751階から5×5 ===== */
 function roomsFor(f){return f>330?4:f>240?3:f>150?2:1}
 function autoView(f){return f>750?2:f>500?3:0}
-function viewEff(){const a=CH?0:autoView(fl);return VIEW>0&&a>0?Math.min(VIEW,a):(VIEW>0?VIEW:a)}
+function viewEff(){const a=(CH||RUN)?0:autoView(fl);return VIEW>0&&a>0?Math.min(VIEW,a):(VIEW>0?VIEW:a)}
 let RM=null; // RM={fl,rows:[各部屋],i:いまの部屋}。部屋が1つの階はnull
 let VE0=-1;
 function viewNote(){const a=viewEff();if(VE0>=0&&a>0&&(VE0===0||a<VE0))toast('🌫 視界がせまくなった<br><span style="font-size:12px;color:#9bbbd6">'+(a*2+1)+'×'+(a*2+1)+'の範囲だけ見える</span>',2800);VE0=a}
@@ -740,11 +749,11 @@ function rollChest(floor){const t=pickTierAvail(floor);if(!t)return null;const s
 const TRAP_P=0.12,CH_WANT=[11,12],CH_MIN=20;
 let CH=null,CHP=null,CW=null,CHT=0,CWERR=0;function chRestore(){GRAY=[];saveFx();renderSkins();paintIcon();CWERR=0;toast('挑戦ステージを作れないので、スキンの色を戻した',2800)}const CHPRE={};
 function trapPool(){return OWNED.filter(id=>{const t=skinTier(id);return t>=1&&t<=4&&!GRAY.includes(id)&&!GLOW.includes(id)})}
-function trapRoll(){if(CH||typeof Worker==='undefined')return false;const p=trapPool();if(!p.length||Math.random()>=TRAP_P)return false;const id=p[Math.floor(Math.random()*p.length)];GRAY.push(id);if(SKIN===id){SKIN='def';ST.set('ice_skin',SKIN)}saveFx();
+function trapRoll(){if(CH||RUN||typeof Worker==='undefined')return false;const p=trapPool();if(!p.length||Math.random()>=TRAP_P)return false;const id=p[Math.floor(Math.random()*p.length)];GRAY.push(id);if(SKIN===id){SKIN='def';ST.set('ice_skin',SKIN)}saveFx();
   ovAdd({k:'fall',t:performance.now()});toast('🕸 わなの宝箱！<br>「'+SKINS.find(k=>k.id===id).name+'」がグレーになった<br><span style="font-size:12px;color:#9bbbd6">スキン一覧でタップすると、取り返しにいける</span>',3800);renderSkins();paintIcon();chPrep();return true}
 function chLenOf(rows){const gg=rows.map(r=>r.split(''));let a=0,b=0;gg.forEach((r,y)=>r.forEach((c,x)=>{if(c==='S'){a=x;b=y}}));const p=shortest(gg,a,b);return p?p.length:0}
 // 取り返し用の2枚は、遊びを止めないよう専用の別Workerで先に作っておく（最短手数の合計が20に届くまで、短いほうを作り直す）
-function chPrep(){if(CHP||CH)return;try{if(!CW){CW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));CW.onmessage=e=>chGot(e.data);CW.onerror=()=>{CW=null;CHP=null;CWERR++;if(CWERR>=2&&GRAY.length&&!CH){chClose();chRestore()}else if($('#chgo')){chClose();toast('挑戦ステージを作れなかった。もう一度タップしてね',2400)}}}}catch(e){CW=null;return}
+function chPrep(){if(CHP||CH)return;try{if(!CW){CW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));CW.onmessage=e=>chGot(e.data);CW.onerror=()=>{CW=null;CHP=null;CWERR++;if(CWERR>=2&&GRAY.length&&!CH){if($('#chgo'))chClose();chRestore()}else if($('#chgo')){chClose();toast('挑戦ステージを作れなかった。もう一度タップしてね',2400)}}}}catch(e){CW=null;return}
   CHP={rows:[null,null],lens:[0,0],tries:0,ok:false};chReq(0);chReq(1)}
 function chReq(i){CHPRE[i]=CHP;try{CW.postMessage({id:'ch|'+i,floor:100,nc:NOCR?1:0,want:CH_WANT[i]})}catch(e){delete CHPRE[i]}}
 function chGot(m){const i=+String(m.id).split('|')[1],gen=CHPRE[i];delete CHPRE[i];if(!gen||gen!==CHP)return;
@@ -753,7 +762,7 @@ function chGot(m){const i=+String(m.id).split('|')[1],gen=CHPRE[i];delete CHPRE[
   else if(!CHP.rows[i]&&CHP.tries<4){CHP.tries++;chReq(i)}}
 function chClose(){clearInterval(CHT);const m=$('#chm');m.hidden=true;m.innerHTML=''}
 function chRefresh(){const b=$('#chgo');if(!b){clearInterval(CHT);return}const ok=!!(CHP&&CHP.ok);b.disabled=!ok;b.textContent=ok?'挑戦する':'つくっています…';$('#chsum').textContent=ok?(CHP.lens[0]+CHP.lens[1]):'20以上'}
-function chAsk(id){if(anim||CH)return;const s=SKINS.find(k=>k.id===id);if(!s||!GRAY.includes(id))return;chPrep();
+function chAsk(id){if(anim||CH||RUN)return;const s=SKINS.find(k=>k.id===id);if(!s||!GRAY.includes(id))return;chPrep();
   if(!CHP&&!CW){chRestore();return}
   const m=$('#chm');m.hidden=false;m.innerHTML='<div class="chb"><b>🔥 「'+s.name+'」を取り返す</b><br>2枚つなぎの激ムズステージ<br>最短手数 合計 <b id="chsum" style="color:#ffd24a">20以上</b> 手<br><small>どちらも1回で抜ける。途中で落ちたら、その面の最初から。ヒントは使えない。やめても何も失わない</small><div class="chr"><button id="chgo" type="button" disabled>つくっています…</button><button id="chno" type="button">やめる</button></div></div>';
   $('#chno').onclick=chClose;$('#chgo').onclick=()=>{if(!(CHP&&CHP.ok))return;if(anim||CH){toast('動きが止まってから、もう一度押してね',1500);return}const sk=id;chClose();chStart(sk)};clearInterval(CHT);CHT=setInterval(chRefresh,300);chRefresh()}
@@ -765,6 +774,60 @@ function chPanel(open){const p=$('#skinpanel');p.hidden=!open;$('#skinbtn').clas
 function chGiveUp(){if(!CH)return;const b=CH.bak;chEnd();anim=null;hintUsed=b.hu;load(b.fl,validRows(b.rows)?b.rows:undefined);chPanel(true);toast('挑戦をやめた（一般ステージに戻った）',1600);if(GRAY.length)chPrep()}
 function chWin(){const id=CH.id,b=CH.bak;GRAY=GRAY.filter(x=>x!==id);if(!GLOW.includes(id))GLOW.push(id);saveFx();chEnd();hintUsed=b.hu;load(b.fl,b.rows);
   ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>0?60:24,7)});toast('✨ 取り返した！<br>「'+SKINS.find(k=>k.id===id).name+'」の色が戻って、光るようになった',4200);chPanel(true);paintIcon();if(GRAY.length)chPrep()}
+/* ===== 60秒駆け上がり: 短い面を次々に解いて、60秒で何階まで登れるかを競う（通常の塔とは別。階・保存・最高到達は触らない） ===== */
+const RUN_SEC=60,RUN_SKIP=3;
+let RUN=null,RW=null,RWB=false,RWQ=0,RUNPOOL=[],RUNT=0;
+try{RUNPOOL=JSON.parse(ST.get('ice_runpool','[]')).filter(e=>e&&Array.isArray(e.r)&&validRows(e.r)&&e.n>=3&&e.n<=12&&chLenOf(e.r)===e.n)}catch(e){RUNPOOL=[]}
+function runSrc(){return LEVELS.map(l=>({r:l.rows,n:l.sol.length})).concat(RUNPOOL,SEEDS.map(e=>({r:e.r,n:e.n})))}
+function runWant(p){return p<6?[3,5]:p<14?[4,6]:p<24?[5,8]:[6,10]}
+function runFlip(rows){let r=rows.slice();if(Math.random()<.5)r=r.map(s=>s.split('').reverse().join(''));if(Math.random()<.5)r=r.slice().reverse();return r}
+function runPick(){const w=runWant(RUN.n),lo=w[0],hi=w[1],src=runSrc(),used=RUN.used,k=e=>e.r.join('|');
+  let c=src.filter(e=>e.n>=lo&&e.n<=hi&&!used.includes(k(e)));
+  if(!c.length)c=src.filter(e=>e.n>=lo-1&&e.n<=hi+2&&!used.includes(k(e)));
+  if(!c.length){used.length=0;c=src.filter(e=>e.n>=lo-1&&e.n<=hi+2)}
+  if(!c.length)c=src;
+  if(c.length>1&&RUN.last)c=c.filter(e=>k(e)!==RUN.last);
+  const e=c[Math.floor(Math.random()*c.length)];RUN.last=k(e);used.push(k(e));if(used.length>14)used.shift();return runFlip(e.r)}
+// 短い面は専用の作る係が裏で少しずつ貯める（貯まった分は保存して、次の挑戦ではすぐ使える）
+function runTopUp(){if(RWB||typeof Worker==='undefined'||RUNPOOL.length>=30)return;
+  try{if(!RW){RW=new Worker(URL.createObjectURL(new Blob([GEN_SRC],{type:'text/javascript'})));
+      RW.onmessage=e=>{RWB=false;const m=e.data;if(m&&validRows(m.rows)){const n=chLenOf(m.rows),k=m.rows.join('|');
+          if(n>=3&&n<=12&&!RUNPOOL.some(x=>x.r.join('|')===k)){RUNPOOL.push({r:m.rows,n:n});if(RUNPOOL.length>60)RUNPOOL.shift();ST.set('ice_runpool',JSON.stringify(RUNPOOL))}}
+        setTimeout(runTopUp,RUN&&!RUN.over?3000:300)};
+      RW.onerror=()=>{RW=null;RWB=false}}
+    const fs=[2,4,6,8,10,12,14,16],f=fs[Math.floor(Math.random()*fs.length)];RWB=true;RW.postMessage({id:'rn|'+(++RWQ),floor:f,nc:0})}catch(e){RW=null;RWB=false}}
+// 主役の表情: ふつう／落ちた（涙）／階段に着いた（きらきら）。いま着ているスキンをそのまま使う
+function runMas(c,face,now){const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,16,16);x.drawImage(skinFrame(SKIN,now),0,0);
+  if(face==='f'){x.fillStyle='#6fb4e8';x.fillRect(5,6,1,2);x.fillRect(10,6,1,2)}
+  if(face==='w'){x.fillStyle='#ffd24a';x.fillRect(1,3,1,1);x.fillRect(14,3,1,1);x.fillRect(2,1,1,1);x.fillRect(13,1,1,1)}}
+function runLeft(){return RUN.dur-(performance.now()-RUN.t0)-RUN.pen}
+function runTick(){if(!RUN||RUN.over)return;const l=runLeft(),now=performance.now();if(l<=0){runEnd();return}
+  $('#rtmi').style.width=Math.max(0,l/RUN.dur*100)+'%';$('#rtmi').style.background=l<10000?'#ff6a4a':'#ffd24a';$('#rsec').textContent=Math.ceil(l/1000);
+  const f=RUN.face&&now-RUN.faceT<900?RUN.face:'n';runMas($('#rmas'),f,now);$('#rmas').classList.toggle('bounce',f==='w')}
+function runLoadCur(){const rows=RUN.cur;curRows=rows.slice();g=curRows.map(r=>r.split(''));for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(g[y][x]==='S'){sx=x;sy=y}
+  S={x:sx,y:sy,holes:[],moves:0,hist:[]};reqLen=chLenOf(rows);anim=null;hintDir=-1;fx=[];hintUsed=false;draw_hud()}
+function runNext(){RUN.cur=runPick();runLoadCur()}
+function runOpen(){if(anim||CH||RUN)return;const b=+ST.get('ice_runbest','0')||0,m=$('#chm');m.hidden=false;
+  m.innerHTML='<div class="chb" style="border-color:#4aa3ff"><b>⏱ 60秒 駆け上がり</b><br>短い面を次々に解いて、60秒で何階まで登れるか<br>ベスト <b style="color:#ffd24a">'+(b?b+'F':'まだ記録なし')+'</b><br><small>解けない面は「とばす」（−3秒）。落ちたらその面の最初から。通常の塔の記録には影響しない</small><div class="chr"><button id="rgo" type="button">スタート</button><button id="rno" type="button">やめる</button></div></div>';
+  $('#rno').onclick=chClose;$('#rgo').onclick=()=>{if(anim){$('#rgo').textContent='動きが止まるまで待って';setTimeout(()=>{const b=$('#rgo');if(b)b.textContent='スタート'},1200);return}chClose();runStart(null)}}
+function runStart(bak){const b=bak||{fl:fl,rows:curRows,hu:hintUsed,RM:RM};
+  RUN={n:0,falls:0,skips:0,dur:RUN_SEC*1000,pen:0,t0:performance.now(),over:false,used:[],cur:null,face:'n',faceT:0,bak:b,armQ:false};
+  RM=null;$('#runbar').hidden=false;$('#rx').textContent='やめる';clearInterval(RUNT);RUNT=setInterval(runTick,100);runNext();runTick();runTopUp()}
+function runEnd(){const r=RUN;if(!r||r.over)return;r.over=true;clearInterval(RUNT);anim=null;
+  const old=+ST.get('ice_runbest','0')||0,n=r.n,nb=n>old;if(nb)ST.set('ice_runbest',n);
+  const m=$('#chm');m.hidden=false;
+  m.innerHTML='<div class="chb" style="border-color:#4aa3ff"><canvas id="rmas2" width="16" height="16" style="width:64px;height:64px"></canvas><br><small>60秒で登った階</small><br><b style="font-size:36px;color:#ffd24a">'+n+'F</b><br><small>'+(nb?'ベスト更新！（前回 '+(old?old+'F':'記録なし')+'）':'ベスト '+old+'F')+'</small><br><small>とばした '+r.skips+'回　落下 '+r.falls+'回</small><div class="chr"><button id="rago" type="button">もう1回</button><button id="rsh" type="button">結果をシェア</button></div><div class="chr"><button id="rback" type="button">もどる</button></div></div>';
+  runMas($('#rmas2'),nb&&n>0?'w':'n',performance.now());
+  $('#rago').onclick=()=>{chClose();runStart(r.bak)};
+  $('#rback').onclick=()=>{chClose();runBack()};
+  $('#rsh').onclick=()=>runShare(n);runTopUp()}
+function runShare(n){const url=/^https?:/.test(location.protocol)?location.origin+location.pathname:'',t='🧊氷の塔 60秒駆け上がりで '+n+'F まで登った！'+(url?'\n'+url:''),b=$('#rsh');
+  try{if(navigator.share){navigator.share({text:t}).catch(()=>{});return}}catch(e){}
+  try{navigator.clipboard.writeText(t).then(()=>{b.textContent='コピーした'},()=>{b.textContent='コピーできなかった'})}catch(e){b.textContent='コピーできなかった'}}
+function runBack(){const r=RUN;if(!r)return;clearInterval(RUNT);RUN=null;$('#runbar').hidden=true;anim=null;const b=r.bak;RM=b.RM;hintUsed=b.hu;load(b.fl,validRows(b.rows)?b.rows:undefined)}
+$('#runbtn').onclick=runOpen;
+$('#rskip').onclick=()=>{if(!RUN||RUN.over||anim)return;RUN.pen+=RUN_SKIP*1000;RUN.skips++;runNext();runTick()};
+$('#rx').onclick=()=>{if(!RUN||RUN.over)return;if(!RUN.armQ){const r=RUN;r.armQ=true;$('#rx').textContent='もう一度で終了';setTimeout(()=>{r.armQ=false;if(RUN===r&&!r.over)$('#rx').textContent='やめる'},2500);return}RUN.over=true;runBack()};
 function openChest(x,y){if(g[y][x]!=='B')return;if(hintUsed){toast('🔒 ヒントを使った階の宝箱は開かない',1600);return}g[y][x]='b';curRows[y]=curRows[y].substring(0,x)+'b'+curRows[y].substring(x+1);
   if(trapRoll()){saveRun();return}
   const r=rollChest(fl);if(!r){toast('📦 宝箱は空っぽだった<br><span style="font-size:12px;color:#9bbbd6">この階で出るスキンは全部そろっている</span>',1800);saveRun();return}
@@ -884,11 +947,11 @@ function renderGoals(){const el=$('#goalpanel'),gl=goalList(),t=myTitle();
   h+='<i class="bst" style="left:'+pos(best)+'%"></i><i class="me" style="left:'+pos(fl)+'%"></i></div>';el.innerHTML=h}
 function milestone(f){toast('<span style="color:var(--ac);font-size:17px">'+f+'F　節目</span><br><span style="font-size:13px">称号「'+titleOf(f)+'」を手に入れた</span>',3000);
   if(FXLV>0)ovAdd({k:'win',t:performance.now()+200,cx:56,cy:56,conf:mkConf(FXLV>1?36:14,7)})}
-function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=CH?('🔥'+(CH.stage+1)+'/2'):fl+'F'+((RM&&RM.fl===fl)?' '+(RM.i+1)+'/'+RM.rows.length:'');$('#fl').style.cssText=(RM&&RM.fl===fl&&!CH)?'white-space:nowrap;font-size:14px':'';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
+function draw_hud(){$('#undo').disabled=!(S&&S.hist&&S.hist.length);$('#fl').textContent=CH?('🔥'+(CH.stage+1)+'/2'):RUN?('⏱'+RUN.n+'F'):fl+'F'+((RM&&RM.fl===fl)?' '+(RM.i+1)+'/'+RM.rows.length:'');$('#fl').style.cssText=(RM&&RM.fl===fl&&!CH)?'white-space:nowrap;font-size:14px':'';$('#mv').textContent=S.moves;$('#fa').textContent=fall;$('#bs').textContent=best+'F';goalCard()}
 function buildChips(){$('#fc').innerHTML=LEVELS.map((l,i)=>`<button class="${i+1===fl?'cur':''}" onclick="load(${i+1})">${i+1}F</button>`).join('')}
 function toast(t,ms){const e=$('#toast');e.innerHTML=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),ms||1100)}
 function act(d){
-  if(anim)return;hintDir=-1;
+  if(anim||(RUN&&RUN.over))return;hintDir=-1;
   const m=move(g,S.holes,S.x,S.y,d);
   if(!m){fx.push({k:'bump',d,t:performance.now()});const bx=S.x+D[d][0],by=S.y+D[d][1];if(bx>=0&&by>=0&&bx<C&&by<R&&g[by][bx]==='B')openChest(bx,by);return}
   S.hist.push({x:S.x,y:S.y,holes:S.holes.slice(),moves:S.moves});
@@ -933,28 +996,32 @@ function finish(){
   const m=anim.m;S.x=m.x;S.y=m.y;S.holes=m.holes;S.moves++;if(m.hit&&m.res==='ok')openChest(m.hit[0],m.hit[1]);
   if(m.res==='ok'){anim=null;draw_hud();return}
   anim.done=m.res;anim.t1=performance.now();draw_hud();
+  if(RUN){const r=RUN;if(r.over)return;
+    if(m.res==='win'){r.n++;r.face='w';r.faceT=performance.now();ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?24:8,7)});banner('↑ '+r.n+'F',700);setTimeout(()=>{if(RUN===r&&!r.over)runNext()},FXLV>0?320:80)}
+    else{r.falls++;r.face='f';r.faceT=performance.now();ovAdd({k:'fall',t:anim.t1});banner('↓ やり直し',700);setTimeout(()=>{if(RUN===r&&!r.over)runLoadCur()},FXLV>0?420:120)}
+    return}
   if(CH){const c=CH;if(m.res==='win'){if(c.stage===0){banner('→ 2枚目',900);setTimeout(()=>{if(CH===c)chLoad(1)},FXLV>0?500:120)}else setTimeout(()=>{if(CH===c)chWin()},FXLV>0?500:120)}
     else{ovAdd({k:'fall',t:anim.t1});banner('↓ やり直し',800);setTimeout(()=>{if(CH===c)chLoad(c.stage)},FXLV>0?450:120)}return}
-  if(m.res==='win'&&RM&&RM.fl===fl&&RM.i<RM.rows.length-1){const c=RM;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?30:10,7)});banner('→ 部屋 '+(RM.i+2)+' / '+RM.rows.length,900);setTimeout(()=>{if(RM===c&&!CH)roomNext()},FXLV>0?350:80);return}
+  if(m.res==='win'&&RM&&RM.fl===fl&&RM.i<RM.rows.length-1){const c=RM;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?30:10,7)});banner('→ 部屋 '+(RM.i+2)+' / '+RM.rows.length,900);setTimeout(()=>{if(RM===c&&!CH&&!RUN)roomNext()},FXLV>0?350:80);return}
   if(m.res==='win'){const nf=fl+1;noChestNext=hintUsed;ovAdd({k:'win',t:anim.t1,cx:m.x*16+8,cy:m.y*16+8,conf:mkConf(FXLV>1?40:14,7)});banner('↑ '+nf+'F',900);
     // 次の階へはすぐ切り替える（約0.18秒）。演出は新しい階の上に重ねて続き、操作は止めない
-    setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});loadSoon(nf)},FXLV>0?180:40)}
+    setTimeout(()=>{if(RUN)return;ovAdd({k:'fade',t:performance.now()});loadSoon(nf)},FXLV>0?180:40)}
   else{fall++;const dn=Math.max(1,fl-1);ovAdd({k:'fall',t:anim.t1});banner('↓ '+dn+'F',800);
-    setTimeout(()=>{ovAdd({k:'fade',t:performance.now()});load(dn)},FXLV>0?450:120)}
+    setTimeout(()=>{if(RUN)return;ovAdd({k:'fade',t:performance.now()});load(dn)},FXLV>0?450:120)}
 }
 $('#undo').onclick=()=>{if(anim)return;const h=S.hist.pop();if(!h)return;S.x=h.x;S.y=h.y;S.holes=h.holes;S.moves=h.moves;hintDir=-1;draw_hud()};
 // 次の階を裏（Worker）で作っている最中なら、できあがるまで最大4秒待つ（間に合わせの面を出さないため）
 function loadSoon(n,t0){t0=t0||performance.now();if(n>7&&hasW()){pruneQ(n);prefetchFloor(n)}let pend=false;for(let i=0;i<roomsFor(n);i++){const e=PRE[preKey(n,i)];if(e&&!e.rows)pend=true}
   if(n>7&&hasW()&&pend&&performance.now()-t0<4000){toast('🧊 階をつくっています…',300);setTimeout(()=>loadSoon(n,t0),120);return}load(n)}
-$('#reset').onclick=()=>{if(anim)return;if(CH){chLoad(CH.stage);return}load(fl,curRows)};
+$('#reset').onclick=()=>{if(anim)return;if(RUN){if(!RUN.over)runLoadCur();return}if(CH){chLoad(CH.stage);return}load(fl,curRows)};
 $('#chx').onclick=chGiveUp;
 /* ===== 続きから遊べるように、今の階と階の形・落下回数を保存する（スキン・設定・最高到達は変更のたびに保存済み） ===== */
-function saveRun(){if(CH)return;ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall,hu:hintUsed?1:0,rm:(RM&&RM.fl===fl)?{rows:RM.rows.map((r,j)=>j===RM.i?curRows:r),i:RM.i}:null}))}
+function saveRun(){if(CH||RUN)return;ST.set('ice_run',JSON.stringify({fl:fl,rows:curRows,nc:NOCR?1:0,fall:fall,hu:hintUsed?1:0,rm:(RM&&RM.fl===fl)?{rows:RM.rows.map((r,j)=>j===RM.i?curRows:r),i:RM.i}:null}))}
 function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x==='string'&&x.length===C&&/^[.sS#oBbchGx]+$/.test(x))&&r.join('').includes('S')&&r.join('').includes('G')}
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261103-1928';
+const BUILD='20261108-0424';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
@@ -966,20 +1033,20 @@ setInterval(()=>{if(!document.hidden)checkUpdate(false)},300000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate(false)});
 setTimeout(()=>checkUpdate(false),4000);
 function homeDisarm(){homeArm=false;clearTimeout(homeT);const b=$('#home');b.classList.remove('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.home)}
-$('#home').onclick=()=>{if(anim)return;if(CH){toast('挑戦中は使えない（あきらめるを押す）',1500);return}if(!homeArm){homeArm=true;const b=$('#home');b.classList.add('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.homeok);toast('もう一度押すと、1階からやり直す',1800);homeT=setTimeout(homeDisarm,3000);return}homeDisarm();fall=0;load(1)};
+$('#home').onclick=()=>{if(anim)return;if(RUN){toast('60秒の途中は使えない',1200);return}if(CH){toast('挑戦中は使えない（あきらめるを押す）',1500);return}if(!homeArm){homeArm=true;const b=$('#home');b.classList.add('arm');iconOn(b.querySelector('canvas'),18,18,ACT_ICON.homeok);toast('もう一度押すと、1階からやり直す',1800);homeT=setTimeout(homeDisarm,3000);return}homeDisarm();fall=0;load(1)};
 
 // ヒント: 進む向きは教えず、いまの位置からゴールまでの最短の手数だけを見せる
 function remainMoves(x0,y0,h0){const seen=new Set([x0+','+y0+','+h0.slice().sort().join('.')]);let cur=[[x0,y0,h0]],n=0,nodes=0;
   while(cur.length&&nodes<30000){n++;const nx=[];for(const [x,y,hs] of cur){nodes++;for(let d=0;d<4;d++){const m=move(g,hs,x,y,d);if(!m||m.res==='fall')continue;if(m.res==='win')return n;
     const k=m.x+','+m.y+','+m.holes.slice().sort().join('.');if(seen.has(k))continue;seen.add(k);nx.push([m.x,m.y,m.holes])}}cur=nx}
   return null}
-$('#hint').onclick=()=>{if(anim)return;if(CH){toast('挑戦中はヒントを使えない',1200);return}const n0=remainMoves(S.x,S.y,S.holes);if(n0===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}const later=(RM&&RM.fl===fl)?RM.rows.slice(RM.i+1).reduce((a,r)=>a+chLenOf(r),0):0;hintDir=-1;hintUsed=true;saveRun();toast('💡 ゴールまで 最短 <span style="color:#ffd24a;font-size:22px">'+(n0+later)+'</span> 手<br><span style="font-size:12px;color:#9bbbd6">'+(later?'この部屋 '+n0+'手＋あと'+(RM.rows.length-RM.i-1)+'部屋':'いまの位置から数えた手数')+'</span>',2800)};
+$('#hint').onclick=()=>{if(anim)return;if(RUN){toast('60秒の途中はヒントを使えない',1200);return}if(CH){toast('挑戦中はヒントを使えない',1200);return}const n0=remainMoves(S.x,S.y,S.holes);if(n0===null){toast('ここからは解けない<br>「1手戻す」を押す',1200);return}const later=(RM&&RM.fl===fl)?RM.rows.slice(RM.i+1).reduce((a,r)=>a+chLenOf(r),0):0;hintDir=-1;hintUsed=true;saveRun();toast('💡 ゴールまで 最短 <span style="color:#ffd24a;font-size:22px">'+(n0+later)+'</span> 手<br><span style="font-size:12px;color:#9bbbd6">'+(later?'この部屋 '+n0+'手＋あと'+(RM.rows.length-RM.i-1)+'部屋':'いまの位置から数えた手数')+'</span>',2800)};
 function setCtl(){const v=$('#ctl').value;ST.set('ice_ctl',v);$('#dp').classList.toggle('on',v==='dpad')}
 $('#ctl').onchange=setCtl;setCtl();$('#tr').onchange=()=>ST.set('ice_tr',$('#tr').value);
 function setView(){VIEW=+$('#vw').value;ST.set('ice_vw',VIEW);best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}draw_hud()}
 $('#vw').onchange=setView;
 $('#fx').value=String(FXLV);goalBtnFx();$('#fx').onchange=()=>{FXLV=+$('#fx').value;ST.set('ice_fx',FXLV);OV.length=0;$('#bn').classList.remove('on');goalBtnFx()};
-$('#cr').onchange=()=>{if(anim)return;if(CH){$('#cr').value=NOCR?'0':'1';toast('挑戦中は変えられない',1200);return}NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl,curRows);toast('設定は次の階から切り替わる',1500)};
+$('#cr').onchange=()=>{if(anim)return;if(CH||RUN){$('#cr').value=NOCR?'0':'1';toast('挑戦中は変えられない',1200);return}NOCR=$('#cr').value==='0';ST.set('ice_cr',NOCR?'0':'1');best=+ST.get(bestKey(),'1');if(fl>best){best=fl;ST.set(bestKey(),best)}load(fl,curRows);toast('設定は次の階から切り替わる',1500)};
 document.querySelectorAll('#dp button').forEach(b=>b.onclick=()=>act(+b.dataset.d));
 addEventListener('keydown',e=>{const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(k!=null){e.preventDefault();act(k)}});
 let p0=null;
@@ -1014,7 +1081,7 @@ function frame(now){
   const bf=fx.find(f=>f.k==='bump');let ox=0,oy=0;if(bf){const a=1-(now-bf.t)/250;ox=Math.round(D[bf.d][0]*2*a);oy=Math.round(D[bf.d][1]*2*a)}
   const cxp=Math.round(pxp*T)+ox,cyp=Math.round(pyp*T)+oy;
   P(cxp+3,cyp+14,10,2,'rgba(0,0,0,.22)');
-  if(GLOW.includes(SKIN))glowAura(now,cxp,cyp,alpha);skinAura(SKIN,now,cxp,cyp,alpha);const mo=skinMotion(SKIN,now);cx.save();cx.globalAlpha=alpha*mo.a;cx.translate(cxp+8+mo.dx,cyp+8+mo.dy);cx.scale(scale,scale);cx.drawImage(skinFrame(SKIN,now),-8,-8);cx.restore();
+  if(GLOW.includes(SKIN))glowAura(now,cxp,cyp,alpha);skinAura(SKIN,now,cxp,cyp,alpha);const mo=skinMotion(SKIN,now);cx.save();cx.globalAlpha=alpha*mo.a;cx.translate(cxp+8+mo.dx,cyp+8+mo.dy);cx.scale(scale,scale);cx.drawImage(skinFrame(SKIN,now),-8,-8);if(anim&&anim.done==='fall'){cx.fillStyle='#6fb4e8';cx.fillRect(-3,-2,1,2);cx.fillRect(2,-2,1,2)}cx.restore();
   skinParticles(SKIN,now,cxp,cyp);
 
   drawOV(now);
@@ -1031,6 +1098,6 @@ buildIcons();buildOpts();paintIcon();renderSkins();
   if(okRows&&run.rm&&Array.isArray(run.rm.rows)&&run.rm.rows.length===roomsFor(run.fl)&&run.rm.rows.every(validRows)&&Number.isInteger(run.rm.i)&&run.rm.i>=0&&run.rm.i<run.rm.rows.length)RM={fl:run.fl,rows:run.rm.rows,i:run.rm.i};
   load(run.fl,okRows?(RM?RM.rows[RM.i]:run.rows):undefined)}else load(1)}
 requestAnimationFrame(frame);
-setTimeout(()=>{if(GRAY.length)chPrep()},4000);
+setTimeout(()=>{if(GRAY.length)chPrep()},4000);setTimeout(runTopUp,6000);
 </script>
 </body></html>
