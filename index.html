@@ -818,14 +818,31 @@ function runStart(bak){const b=bak||{fl:fl,rows:curRows,hu:hintUsed,RM:RM};
 function runEnd(){const r=RUN;if(!r||r.over)return;r.over=true;clearInterval(RUNT);anim=null;
   const old=+ST.get('ice_runbest','0')||0,n=r.n,nb=n>old;if(nb)ST.set('ice_runbest',n);
   const m=$('#chm');m.hidden=false;
-  m.innerHTML='<div class="chb" style="border-color:#4aa3ff"><canvas id="rmas2" width="16" height="16" style="width:64px;height:64px"></canvas><br><small>60秒で登った階</small><br><b style="font-size:36px;color:#ffd24a">'+n+'F</b><br><small>'+(nb?'ベスト更新！（前回 '+(old?old+'F':'記録なし')+'）':'ベスト '+old+'F')+'</small><br><small>とばした '+r.skips+'回　落下 '+r.falls+'回</small><div class="chr"><button id="rago" type="button">もう1回</button><button id="rsh" type="button">結果をシェア</button></div><div class="chr"><button id="rback" type="button">もどる</button></div></div>';
+  m.innerHTML='<div class="chb" style="border-color:#4aa3ff"><canvas id="rmas2" width="16" height="16" style="width:64px;height:64px"></canvas><br><small>60秒で登った階</small><br><b style="font-size:36px;color:#ffd24a">'+n+'F</b><br><small>'+(nb?'ベスト更新！（前回 '+(old?old+'F':'記録なし')+'）':'ベスト '+old+'F')+'</small><br><small>とばした '+r.skips+'回　落下 '+r.falls+'回</small><div class="chr"><button id="rago" type="button">もう1回</button><button id="rsh" type="button">結果をシェア</button></div><div class="chr"><button id="rimg" type="button">画像でシェア</button><button id="rback" type="button">もどる</button></div></div>';
   runMas($('#rmas2'),nb&&n>0?'w':'n',performance.now());
   $('#rago').onclick=()=>{chClose();runStart(r.bak)};
   $('#rback').onclick=()=>{chClose();runBack()};
-  $('#rsh').onclick=()=>runShare(n);runTopUp()}
+  $('#rsh').onclick=()=>runShare(n);$('#rimg').onclick=()=>runCardShare(n,nb,r);runTopUp()}
 function runShare(n){const url=/^https?:/.test(location.protocol)?location.origin+location.pathname:'',t='🧊氷の塔 60秒駆け上がりで '+n+'F まで登った！'+(url?'\n'+url:''),b=$('#rsh');
   try{if(navigator.share){navigator.share({text:t}).catch(()=>{});return}}catch(e){}
   try{navigator.clipboard.writeText(t).then(()=>{b.textContent='コピーした'},()=>{b.textContent='コピーできなかった'})}catch(e){b.textContent='コピーできなかった'}}
+function runRank(n){return n>=40?['伝説の登頂者','#ff7ad9']:n>=30?['氷塔マスター','#ffd24a']:n>=20?['駆け上がりの達人','#7fe0ff']:n>=12?['なれてきた','#9be28a']:n>=6?['ひよっこ登山家','#cfd8e6']:['はじめの一歩','#cfd8e6']}
+function runCard(n,nb,r){const W=540,H=720,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const gr=x.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a1a33');gr.addColorStop(1,'#1d5a96');x.fillStyle=gr;x.fillRect(0,0,W,H);
+  let sd=n*7+13;const rnd=()=>(sd=(sd*9301+49297)%233280)/233280;
+  for(let i=0;i<70;i++){x.globalAlpha=.25+rnd()*.5;x.fillStyle='#fff';const q=1+Math.floor(rnd()*3);x.fillRect(Math.floor(rnd()*W),Math.floor(rnd()*H),q,q)}x.globalAlpha=1;
+  x.textAlign='center';x.fillStyle='#bfe3ff';x.font='bold 30px sans-serif';x.fillText('🧊 氷の塔　60秒駆け上がり',W/2,70);
+  x.imageSmoothingEnabled=false;const mc=document.createElement('canvas');mc.width=16;mc.height=16;runMas(mc,nb&&n>0?'w':'n',performance.now());x.drawImage(mc,W/2-96,110,192,192);
+  x.fillStyle='#ffd24a';x.font='bold 150px sans-serif';x.fillText(n+'F',W/2,470);
+  const k=runRank(n);x.fillStyle=k[1];x.font='bold 40px sans-serif';x.fillText(k[0],W/2,535);
+  x.fillStyle='#e8f3ff';x.font='26px sans-serif';x.fillText(nb&&n>0?'★ ベスト更新！':'ベスト '+(+ST.get('ice_runbest','0')||0)+'F',W/2,585);
+  x.fillStyle='#9fc6e8';x.font='22px sans-serif';x.fillText('とばし '+r.skips+'回　落下 '+r.falls+'回',W/2,625);
+  const url=/^https?:/.test(location.protocol)?location.host+location.pathname:'';if(url){x.fillStyle='#7fa8cc';x.font='18px sans-serif';x.fillText(url,W/2,684)}
+  return c}
+function runCardShare(n,nb,r){const b=$('#rimg'),c=runCard(n,nb,r),t='🧊氷の塔 60秒駆け上がりで '+n+'F まで登った！'+(/^https?:/.test(location.protocol)?'\n'+location.origin+location.pathname:'');
+  c.toBlob(bl=>{if(!bl){b.textContent='作れなかった';return}
+    try{const f=new File([bl],'ice_tower_'+n+'F.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],text:t}).catch(()=>{});return}}catch(e){}
+    try{const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='ice_tower_'+n+'F.png';document.body.appendChild(a);a.click();a.remove();b.textContent='画像を保存した'}catch(e){b.textContent='保存できなかった'}},'image/png')}
 function runBack(){const r=RUN;if(!r)return;clearInterval(RUNT);RUN=null;$('#runbar').hidden=true;anim=null;const b=r.bak;RM=b.RM;hintUsed=b.hu;load(b.fl,validRows(b.rows)?b.rows:undefined)}
 $('#runbtn').onclick=runOpen;
 $('#rskip').onclick=()=>{if(!RUN||RUN.over||anim)return;RUN.pen+=RUN_SKIP*1000;RUN.skips++;runNext();runTick()};
@@ -1023,7 +1040,7 @@ function validRows(r){return Array.isArray(r)&&r.length===R&&r.every(x=>typeof x
 let homeArm=false,homeT=0;
 
 /* ===== 更新の仕組み: 新しい版が出ていたら自動で知らせる（5分ごと・開き直したとき）＋手動の確認ボタン ===== */
-const BUILD='20261108-0443';
+const BUILD='20261108-0619';
 let updAsked=false;
 async function checkUpdate(manual){try{const r=await fetch('version.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const j=await r.json();
   if(BUILD!=='dev'&&j&&j.build&&j.build!==BUILD){if(!updAsked||manual){updAsked=true;$('#upd').hidden=false}}else if(manual)toast('✅ すでに最新版です',1400)}catch(e){if(manual)toast('更新を確認できなかった<br>（通信できない場所では使えない）',2000)}}
